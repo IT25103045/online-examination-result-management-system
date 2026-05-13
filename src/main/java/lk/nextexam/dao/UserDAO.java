@@ -8,17 +8,14 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * Professional DAO for user account management.
+ * UserDAO manages user-related file handling operations.
  *
- * Storage file:
- * users.txt
+ * This class is responsible for reading, writing, searching, updating,
+ * and deleting user records from the user data file. It separates data
+ * access logic from servlet and JSP code.
  *
- * Format:
- * userId|username|password|email|role|status
- *
- * Notes:
- * - Current project still supports plain-text passwords for compatibility.
- * - verifyPassword() is prepared for future BCrypt support.
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class UserDAO {
 

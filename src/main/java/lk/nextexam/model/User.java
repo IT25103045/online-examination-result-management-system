@@ -3,15 +3,15 @@ package lk.nextexam.model;
 import lk.nextexam.dao.FileUtil;
 
 /**
- * User model for NextExamLK.
+ * User model represents a system user in Nextexam.
  *
- * Current storage format:
- * userId|username|password|email|role|status
+ * This class is used to store common user details such as user ID,
+ * username, password, role, and account status. It demonstrates
+ * encapsulation by keeping fields private and exposing controlled
+ * access through getter and setter methods.
  *
- * Notes:
- * - Password field currently supports existing plain-text passwords.
- * - The helper method isPasswordHash() prepares the system for future BCrypt migration.
- * - All getters are null-safe.
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class User {
 
