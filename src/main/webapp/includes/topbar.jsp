@@ -1,3 +1,9 @@
+<%--
+    Topbar component for Nextexam dashboard layout.
+    Displays page actions, user information, and responsive navigation controls.
+    Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
+--%>
+
 <%@ page import="lk.nextexam.dao.FileUtil" %>
 
 <%

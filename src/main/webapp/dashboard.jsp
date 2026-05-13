@@ -1,3 +1,10 @@
+<%--
+    Main dashboard page for Nextexam.
+    Displays role-based dashboard content and quick access cards
+    for Admin, Lecturer, and Student users.
+    Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
+--%>
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="java.util.List" %>
 <%@ page import="lk.nextexam.dao.FileUtil" %>
