@@ -17,14 +17,13 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
 /**
- * Professional login servlet for NextExamLK.
+ * LoginServlet handles user authentication for the Nextexam system.
  *
- * Responsibilities:
- * - Validate login input.
- * - Authenticate user through UserDAO.
- * - Regenerate session after login to reduce session fixation risk.
- * - Store consistent session attributes used by AuthFilter, sidebar, topbar, and pages.
- * - Redirect users based on role.
+ * This servlet validates user credentials, creates a user session,
+ * and redirects users to the correct dashboard based on their role.
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {

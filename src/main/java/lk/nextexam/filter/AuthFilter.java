@@ -19,15 +19,14 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * Professional authentication and authorization filter for NextExamLK.
+ * AuthFilter protects restricted pages in the Nextexam system.
  *
- * Responsibilities:
- * - Protect secured application routes.
- * - Validate authenticated sessions.
- * - Enforce Admin / Lecturer / Student role access.
- * - Prevent students from accessing management modules.
- * - Prevent staff from entering the student exam console.
- * - Add no-cache and browser security headers.
+ * This filter checks whether a user session exists before allowing access
+ * to protected resources. It supports role-based access control by ensuring
+ * that only authenticated users can access system dashboards and management pages.
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 @WebFilter(urlPatterns = {
         "/dashboard.jsp",

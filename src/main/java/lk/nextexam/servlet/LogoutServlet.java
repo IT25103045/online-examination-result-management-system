@@ -10,14 +10,13 @@ import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
- * Professional logout servlet for NextExamLK.
+ * LogoutServlet handles user logout functionality.
  *
- * Responsibilities:
- * - Clear authenticated session.
- * - Invalidate existing session safely.
- * - Clear JSESSIONID cookie.
- * - Prevent browser cache after logout.
- * - Redirect user to login page with logout status.
+ * It invalidates the current session and redirects the user back to
+ * the login page to prevent unauthorized access after logout.
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 @WebServlet("/logout")
 public class LogoutServlet extends HttpServlet {

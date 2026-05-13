@@ -1,3 +1,11 @@
+<%--
+    Login page for Nextexam.
+    Allows Admin, Lecturer, and Student users to authenticate
+    and access their role-based dashboards.
+    Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
+--%>
+
+
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ page import="lk.nextexam.dao.FileUtil" %>
 

@@ -1,3 +1,9 @@
+<%--
+    Sidebar navigation component.
+    Provides role-based navigation links for Admin, Lecturer, and Student users.
+    Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
+--%>
+
 <%@ page import="lk.nextexam.dao.FileUtil" %>
 
 <%
