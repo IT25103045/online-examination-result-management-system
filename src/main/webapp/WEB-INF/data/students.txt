@@ -1,0 +1,4 @@
+STU001|Kasun Perera|kasun@gmail.com|SE1020|Y1S2|0771234567|Eligible
+STU002|Nimali Fernando|nimali@gmail.com|IT1010|Y1S1|0777654321|Pending
+STU003|Ravindu Silva|ravindu@gmail.com|SE1020|Y1S2|0714567890|Blocked
+

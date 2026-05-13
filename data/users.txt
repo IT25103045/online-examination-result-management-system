@@ -1,0 +1,3 @@
+U001|admin|admin123|admin@nextexam.lk|Admin|Active
+U002|lecturer01|lecturer123|lecturer@nextexam.lk|Lecturer|Active
+U003|student01|student123|student@nextexam.lk|Student|Active

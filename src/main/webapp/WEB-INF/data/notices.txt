@@ -1,0 +1,3 @@
+N001|OOP Final Examination Notice|The SE1020 Object Oriented Programming examination will be held on 20 May 2026.|2026-05-10|All Students|High|Published
+N002|Result Release Notice|Results will be released after final verification by lecturers.|2026-05-15|Year 1 Students|Medium|Published
+N003|Question Review Reminder|Lecturers are requested to review all draft questions before publishing exams.|2026-05-18|Lecturers|Normal|Draft

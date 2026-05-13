@@ -1,0 +1,2 @@
+F001|Faculty of Computing|Dean - Computing|computing@sliit.lk|Active
+F002|Faculty of Engineering|Dean - Engineering|engineering@sliit.lk|Active

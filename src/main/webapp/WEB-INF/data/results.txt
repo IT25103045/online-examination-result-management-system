@@ -1,0 +1,3 @@
+R001|STU001|EX001|85|A|Pass|Verified|Published
+R002|STU002|EX001|68|B|Pass|Pending|Not Published
+R003|STU003|EX001|35|F|Fail|Review|Not Published

@@ -1,0 +1,3 @@
+EX001|Object Oriented Programming|2026-05-20|120|100|Scheduled
+EX002|Database Systems|2026-06-01|90|100|Completed
+EX003|Web Application Development|2026-06-12|105|100|Draft

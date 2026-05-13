@@ -1,0 +1,3 @@
+Q001|EX001|MCQ|What is encapsulation in OOP?|Private data access control|Parent class inheritance|Same method different forms|Converting code|A|5|Published|Protecting data using private fields and public methods
+Q002|EX001|Essay|Explain inheritance with a Java example.||||||10|Review|Inheritance allows a child class to reuse parent class properties and methods.
+Q003|EX002|MCQ|Which keyword is used to inherit a class in Java?|this|super|extends|implements|C|5|Published|The extends keyword is used for class inheritance in Java.

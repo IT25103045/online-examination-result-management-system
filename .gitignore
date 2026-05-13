@@ -1,0 +1,26 @@
+# Build output
+target/
+*.class
+
+# IntelliJ IDEA
+.idea/
+*.iml
+out/
+
+# Smart Tomcat
+.smarttomcat/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Runtime uploaded files
+src/main/webapp/uploads/profile/*
+src/main/webapp/uploads/documents/*
+
+# Keep upload folders
+!src/main/webapp/uploads/profile/.gitkeep
+!src/main/webapp/uploads/documents/.gitkeep
