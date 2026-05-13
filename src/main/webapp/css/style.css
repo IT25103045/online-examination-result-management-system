@@ -1,11 +1,11 @@
-/* =========================================================
-   NEXTEXAM.LK PROFESSIONAL UI/UX STYLE FILE
-   Clean full replacement for style.css
-   ========================================================= */
-
-/* ================================
-   Global Theme Variables
-================================ */
+/*
+ * Nextexam Main Stylesheet
+ * Contains dashboard layout, responsive UI, cards, forms, tables,
+ * navigation styles, and mobile-first interface styling.
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
+ */
 :root {
     --primary: #1e3a8a;
     --primary-light: #2563eb;
