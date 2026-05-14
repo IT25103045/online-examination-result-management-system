@@ -1,13 +1,22 @@
 <%--
     Main dashboard page for Nextexam.
     Displays role-based dashboard content and quick access cards
-    for Admin, Lecturer, and Student users.
-    Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
+    for Admin and Lecturer users.
+
+    Enhancement:
+    - Added Activity Log System support
+    - Displays latest login/logout activities from activity_logs.txt
+
+    Responsible Member:
+    IT25103045 - De Silva H.L.D.C.P.C
 --%>
 
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
+
 <%@ page import="java.util.List" %>
+
 <%@ page import="lk.nextexam.dao.FileUtil" %>
+<%@ page import="lk.nextexam.dao.ActivityLogDAO" %>
 <%@ page import="lk.nextexam.dao.StudentDAO" %>
 <%@ page import="lk.nextexam.dao.ExamDAO" %>
 <%@ page import="lk.nextexam.dao.QuestionDAO" %>
@@ -16,6 +25,8 @@
 <%@ page import="lk.nextexam.dao.NoticeDAO" %>
 <%@ page import="lk.nextexam.dao.FeedbackDAO" %>
 <%@ page import="lk.nextexam.dao.ExamSubmissionDAO" %>
+
+<%@ page import="lk.nextexam.model.ActivityLog" %>
 <%@ page import="lk.nextexam.model.Student" %>
 <%@ page import="lk.nextexam.model.Exam" %>
 <%@ page import="lk.nextexam.model.Question" %>
@@ -49,6 +60,7 @@
     NoticeDAO noticeDAO = new NoticeDAO();
     FeedbackDAO feedbackDAO = new FeedbackDAO();
     ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
+    ActivityLogDAO activityLogDAO = new ActivityLogDAO();
 
     List<Student> students = studentDAO.getAllStudents(application);
     List<Exam> exams = examDAO.getAllExams(application);
@@ -57,6 +69,7 @@
     List<User> users = userDAO.getAllUsers(application);
     List<Notice> notices = noticeDAO.getAllNotices(application);
     List<Feedback> feedbackList = feedbackDAO.getAllFeedback(application);
+    List<ActivityLog> latestLogs = activityLogDAO.getLatestLogs(application, 6);
 
     int totalStudents = students != null ? students.size() : 0;
     int totalExams = exams != null ? exams.size() : 0;
@@ -65,6 +78,7 @@
     int totalUsers = users != null ? users.size() : 0;
     int totalNotices = notices != null ? notices.size() : 0;
     int totalFeedback = feedbackList != null ? feedbackList.size() : 0;
+    int totalActivityLogs = activityLogDAO.countLogs(application);
 
     int draftExams = examDAO.countDraftExams(application);
     int scheduledExams = examDAO.countScheduledExams(application);
@@ -584,35 +598,68 @@
 
             <div class="row g-4">
                 <div class="col-xl-4">
-                    <div class="app-card p-4 h-100">
+                    <div class="app-card p-4 h-100 activity-log-card">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <h4 class="fw-bold mb-1">Recent Activity</h4>
-                                <p class="text-secondary mb-0">Latest platform summary</p>
+                                <h4 class="fw-bold mb-1">Recent System Activity</h4>
+                                <p class="text-secondary mb-0">Latest user actions</p>
                             </div>
 
-                            <span class="badge badge-soft-secondary">Live</span>
+                            <span class="badge badge-soft-primary">
+                                <i class="bi bi-activity me-1"></i>
+                                <%= totalActivityLogs %> Logs
+                            </span>
                         </div>
 
-                        <div class="activity-item">
-                            <div class="activity-title">Student records available</div>
-                            <small class="text-secondary"><%= totalStudents %> candidates saved in the system.</small>
-                        </div>
+                        <% if (latestLogs == null || latestLogs.isEmpty()) { %>
+                            <div class="empty-state py-4">
+                                <div class="empty-state-icon">
+                                    <i class="bi bi-clock-history"></i>
+                                </div>
+                                <h5>No activity logs yet</h5>
+                                <p>Login and logout actions will appear here.</p>
+                            </div>
+                        <% } else { %>
+                            <div class="activity-log-list">
+                                <% for (ActivityLog log : latestLogs) { %>
+                                    <div class="activity-log-item">
+                                        <div class="activity-log-icon">
+                                            <% if ("LOGIN".equalsIgnoreCase(log.getAction())) { %>
+                                                <i class="bi bi-box-arrow-in-right"></i>
+                                            <% } else if ("LOGOUT".equalsIgnoreCase(log.getAction())) { %>
+                                                <i class="bi bi-box-arrow-right"></i>
+                                            <% } else { %>
+                                                <i class="bi bi-activity"></i>
+                                            <% } %>
+                                        </div>
 
-                        <div class="activity-item">
-                            <div class="activity-title">Exam records available</div>
-                            <small class="text-secondary"><%= totalExams %> total exams, <%= attemptableExams %> currently attemptable.</small>
-                        </div>
+                                        <div class="activity-log-content">
+                                            <div class="activity-log-top">
+                                                <span class="activity-log-action">
+                                                    <%= FileUtil.h(log.getAction()) %>
+                                                </span>
 
-                        <div class="activity-item">
-                            <div class="activity-title">Question bank updated</div>
-                            <small class="text-secondary"><%= totalQuestions %> questions saved, <%= draftQuestions %> in draft.</small>
-                        </div>
+                                                <span class="activity-log-role">
+                                                    <%= FileUtil.h(log.getUserRole()) %>
+                                                </span>
+                                            </div>
 
-                        <div class="activity-item">
-                            <div class="activity-title">Submission workflow</div>
-                            <small class="text-secondary"><%= submittedAttempts %> submissions, <%= manualReviewAttempts %> awaiting manual review.</small>
-                        </div>
+                                            <div class="activity-log-description">
+                                                <%= FileUtil.h(log.getDescription()) %>
+                                            </div>
+
+                                            <div class="activity-log-meta">
+                                                <i class="bi bi-person-badge me-1"></i>
+                                                <%= FileUtil.h(log.getUserId()) %>
+                                                <span class="mx-2">•</span>
+                                                <i class="bi bi-calendar-event me-1"></i>
+                                                <%= FileUtil.h(log.getCreatedAt()) %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% } %>
                     </div>
                 </div>
 
