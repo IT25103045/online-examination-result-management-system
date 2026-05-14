@@ -283,6 +283,18 @@
             <span>Feedback</span>
         </a>
 
+        <a class="sidebar-link <%= "documents".equals(sbActiveMenu) ? "active" : "" %>"
+           href="<%= request.getContextPath() %>/documents">
+            <i class="bi bi-folder-check"></i>
+            <span>
+                <% if (sbIsStudent) { %>
+                    My Documents
+                <% } else { %>
+                    Document Verification
+                <% } %>
+            </span>
+        </a>
+
         <!-- System Administration -->
         <% if (sbIsAdmin) { %>
             <div class="sidebar-label">System Administration</div>

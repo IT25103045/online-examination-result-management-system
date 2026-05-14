@@ -3260,3 +3260,52 @@ strong {
         font-size: 10px;
     }
 }
+/* ================================
+   Document Upload & Verification
+================================ */
+.document-table {
+    min-width: 1120px;
+}
+
+.document-table textarea {
+    min-width: 220px;
+    resize: vertical;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.document-action-form {
+    min-width: 300px;
+}
+
+.document-action-form .action-group {
+    justify-content: flex-start;
+    gap: 6px;
+}
+
+.document-upload-drop {
+    border: 1.5px dashed #bfdbfe;
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 32%),
+        #ffffff;
+    padding: 20px;
+}
+
+.document-status-card {
+    padding: 18px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+@media (max-width: 768px) {
+    .document-action-form {
+        min-width: 260px;
+    }
+
+    .document-table {
+        min-width: 980px;
+    }
+}
