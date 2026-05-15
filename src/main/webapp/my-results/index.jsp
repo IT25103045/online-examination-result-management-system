@@ -47,6 +47,10 @@
         alertMessage = "You do not have permission to access that page.";
     } else if ("sessionExpired".equalsIgnoreCase(error)) {
         alertMessage = "Your session has expired. Please log in again.";
+    } else if ("missingResultId".equalsIgnoreCase(error)) {
+        alertMessage = "Result ID is missing. Please select a valid result.";
+    } else if ("resultNotFound".equalsIgnoreCase(error)) {
+        alertMessage = "The selected result could not be found.";
     }
 %>
 
@@ -72,7 +76,7 @@
 
                         <p class="hero-text">
                             Welcome, <strong><%= FileUtil.h(studentName) %></strong>. View your published examination
-                            results, grades, pass/fail status, and verification information.
+                            results, grades, pass/fail status, verification information, and download official PDF result sheets.
                         </p>
                     </div>
 
@@ -170,7 +174,7 @@
                             <div>
                                 <h4 class="fw-bold mb-1">Result Records</h4>
                                 <p class="text-secondary mb-0">
-                                    Only verified and published results are displayed here.
+                                    Only verified and published results are displayed here. Use the PDF button to download an official result sheet.
                                 </p>
                             </div>
 
@@ -191,13 +195,14 @@
                                     <th>Status</th>
                                     <th>Verification</th>
                                     <th>Performance</th>
+                                    <th>PDF</th>
                                 </tr>
                                 </thead>
 
                                 <tbody>
                                 <% if (myResults == null || myResults.isEmpty()) { %>
                                     <tr>
-                                        <td colspan="7">
+                                        <td colspan="8">
                                             <div class="empty-state">
                                                 <div class="empty-state-icon">
                                                     <i class="bi bi-inbox"></i>
@@ -241,6 +246,14 @@
                                             <span class="badge badge-soft-secondary">
                                                 <%= FileUtil.h(result.getPerformanceLabel()) %>
                                             </span>
+                                        </td>
+
+                                        <td>
+                                            <a href="<%= request.getContextPath() %>/result-pdf?id=<%= FileUtil.h(result.getResultId()) %>"
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="bi bi-file-earmark-pdf me-1"></i>
+                                                Download
+                                            </a>
                                         </td>
                                     </tr>
                                 <% }
@@ -298,6 +311,11 @@
                         <div class="exam-info-box mb-3">
                             <small>Student ID</small>
                             <strong><%= FileUtil.h(studentId) %></strong>
+                        </div>
+
+                        <div class="exam-info-box mb-3">
+                            <small>PDF Reports</small>
+                            <strong>Download official result sheets</strong>
                         </div>
 
                         <div class="exam-info-box">

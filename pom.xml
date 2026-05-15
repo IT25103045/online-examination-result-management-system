@@ -41,6 +41,13 @@
             <version>3.0.1</version>
         </dependency>
 
+        <!-- PDF generation for downloadable result sheets -->
+        <dependency>
+            <groupId>com.github.librepdf</groupId>
+            <artifactId>openpdf</artifactId>
+            <version>1.3.39</version>
+        </dependency>
+
         <!-- Optional MySQL connector for later upgrade -->
         <dependency>
             <groupId>com.mysql</groupId>

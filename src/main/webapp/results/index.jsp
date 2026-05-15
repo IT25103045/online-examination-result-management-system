@@ -129,6 +129,10 @@
             alertMessage = "Result could not be updated.";
         } else if ("resultDeleteFailed".equalsIgnoreCase(error)) {
             alertMessage = "Result could not be deleted.";
+        } else if ("accessDenied".equalsIgnoreCase(error)) {
+            alertMessage = "You do not have permission to download this result PDF.";
+        } else if ("resultNotFound".equalsIgnoreCase(error)) {
+            alertMessage = "Selected result could not be found.";
         } else {
             alertMessage = "Something went wrong. Please check the result details and try again.";
         }
@@ -156,8 +160,8 @@
                         <h1 class="hero-title">Result Management</h1>
 
                         <p class="hero-text">
-                            Enter marks, calculate grades, verify result records, and control publishing visibility
-                            for student result access.
+                            Enter marks, calculate grades, verify result records, control publishing visibility,
+                            and generate professional PDF result sheets.
                         </p>
                     </div>
 
@@ -561,7 +565,7 @@
                 <div>
                     <h2 class="page-title">Result Records</h2>
                     <p class="page-description">
-                        View, search, update, verify, publish, and delete student examination result records.
+                        View, search, update, verify, publish, delete, and export student examination result records.
                     </p>
                 </div>
 
@@ -731,6 +735,13 @@
                                                 data-published="<%= FileUtil.h(result.getPublished()) %>">
                                             <i class="bi bi-eye"></i>
                                         </button>
+
+                                        <a class="btn btn-sm btn-outline-primary"
+                                           href="<%= request.getContextPath() %>/result-pdf?id=<%= FileUtil.h(result.getResultId()) %>"
+                                           title="Download PDF Result"
+                                           target="_blank">
+                                            <i class="bi bi-file-earmark-pdf"></i>
+                                        </a>
 
                                         <button class="btn btn-sm btn-outline-primary"
                                                 type="button"
