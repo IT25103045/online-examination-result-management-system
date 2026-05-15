@@ -1,6 +1,5 @@
 package lk.nextexam.servlet;
-import lk.nextexam.dao.ExamIntegrityLogDAO;
-import lk.nextexam.model.ExamIntegrityLog;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -8,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lk.nextexam.dao.ExamDAO;
+import lk.nextexam.dao.ExamIntegrityLogDAO;
 import lk.nextexam.dao.ExamSubmissionDAO;
 import lk.nextexam.dao.FileUtil;
 import lk.nextexam.dao.QuestionDAO;
@@ -21,24 +21,23 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Professional servlet for loading the secure student exam console.
+ * ExamRulesServlet controls the exam rules agreement page before the exam console.
  *
- * Responsibilities:
- * - Validate authenticated student session.
- * - Validate exam availability.
- * - Validate exam readiness.
- * - Prevent duplicate attempts.
- * - Load only student-visible questions.
- * - Prepare exam statistics for professional UI.
+ * This feature improves exam integrity by requiring students to read and accept
+ * examination rules before entering the secure online exam environment.
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
-@WebServlet("/exam-console")
-public class ExamConsoleServlet extends HttpServlet {
+@WebServlet("/exam-rules")
+public class ExamRulesServlet extends HttpServlet {
+
+    private static final String EVENT_RULES_ACCEPTED = "EXAM_RULES_ACCEPTED";
 
     private final ExamDAO examDAO = new ExamDAO();
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
     private final ExamIntegrityLogDAO integrityLogDAO = new ExamIntegrityLogDAO();
-
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -48,20 +47,13 @@ public class ExamConsoleServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
 
+        if (!isStudentAuthenticated(session)) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp?error=sessionExpired");
+            return;
+        }
+
         String studentId = getSessionValue(session, "userId");
         String studentName = getStudentDisplayName(session);
-        String userRole = getSessionValue(session, "userRole");
-
-        if (!User.ROLE_STUDENT.equalsIgnoreCase(userRole)) {
-            redirectToMyExams(request, response, "error", "accessDenied");
-            return;
-        }
-
-        if (studentId.isEmpty()) {
-            redirectToMyExams(request, response, "error", "sessionExpired");
-            return;
-        }
-
         String examId = FileUtil.clean(request.getParameter("examId"));
 
         if (examId.isEmpty()) {
@@ -93,19 +85,6 @@ public class ExamConsoleServlet extends HttpServlet {
             return;
         }
 
-        String rulesKey = "examRulesAccepted_" + examId;
-        Object rulesAccepted = session.getAttribute(rulesKey);
-
-        if (!"accepted".equals(String.valueOf(rulesAccepted))) {
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/exam-rules?examId="
-                            + urlEncode(examId)
-                            + "&error=rulesRequired"
-            );
-            return;
-        }
-
         List<Question> questions = questionDAO.getStudentVisibleQuestionsByExamId(getServletContext(), examId);
 
         if (questions == null || questions.isEmpty()) {
@@ -113,36 +92,85 @@ public class ExamConsoleServlet extends HttpServlet {
             return;
         }
 
-        ExamConsoleStats stats = calculateStats(questions);
+        ExamRuleStats stats = calculateStats(questions);
 
         request.setAttribute("exam", exam);
-        request.setAttribute("questions", questions);
-
         request.setAttribute("studentId", studentId);
         request.setAttribute("studentName", studentName);
-
-        request.setAttribute("totalMarks", stats.totalMarks);
         request.setAttribute("questionCount", stats.questionCount);
         request.setAttribute("mcqQuestionCount", stats.mcqQuestionCount);
         request.setAttribute("essayQuestionCount", stats.essayQuestionCount);
-        request.setAttribute("mcqMarks", stats.mcqMarks);
-        request.setAttribute("essayMarks", stats.essayMarks);
+        request.setAttribute("totalMarks", stats.totalMarks);
         request.setAttribute("requiresManualReview", stats.essayQuestionCount > 0);
-        request.setAttribute("readinessMessage", readinessMessage);
+
+        request.getRequestDispatcher("/exam-rules/index.jsp").forward(request, response);
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws IOException {
+
+        prepareRequestResponse(request, response);
+
+        HttpSession session = request.getSession(false);
+
+        if (!isStudentAuthenticated(session)) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp?error=sessionExpired");
+            return;
+        }
+
+        String studentId = getSessionValue(session, "userId");
+        String studentName = getStudentDisplayName(session);
+        String examId = FileUtil.clean(request.getParameter("examId"));
+        String agreement = FileUtil.clean(request.getParameter("agreement"));
+
+        if (examId.isEmpty()) {
+            redirectToMyExams(request, response, "error", "missingExamId");
+            return;
+        }
+
+        if (!"accepted".equalsIgnoreCase(agreement)) {
+            response.sendRedirect(request.getContextPath()
+                    + "/exam-rules?examId="
+                    + urlEncode(examId)
+                    + "&error=agreementRequired");
+            return;
+        }
+
+        Exam exam = examDAO.getExamById(getServletContext(), examId);
+
+        if (exam == null) {
+            redirectToMyExams(request, response, "error", "examNotFound");
+            return;
+        }
+
+        if (!exam.canStudentAttempt()) {
+            redirectToMyExams(request, response, "error", "examUnavailable");
+            return;
+        }
+
+        if (submissionDAO.hasStudentSubmitted(getServletContext(), studentId, examId)) {
+            redirectToMyExams(request, response, "error", "alreadySubmitted");
+            return;
+        }
+
+        session.setAttribute(getRulesSessionKey(examId), "accepted");
 
         integrityLogDAO.addLog(
                 getServletContext(),
                 studentId,
                 examId,
-                ExamIntegrityLog.EVENT_EXAM_STARTED,
-                studentName + " opened the secure exam console"
+                EVENT_RULES_ACCEPTED,
+                studentName + " accepted the exam rules before starting the exam"
         );
 
-        request.getRequestDispatcher("/exam-console/index.jsp").forward(request, response);
+        response.sendRedirect(request.getContextPath()
+                + "/exam-console?examId="
+                + urlEncode(examId));
     }
 
-    private ExamConsoleStats calculateStats(List<Question> questions) {
-        ExamConsoleStats stats = new ExamConsoleStats();
+    private ExamRuleStats calculateStats(List<Question> questions) {
+        ExamRuleStats stats = new ExamRuleStats();
 
         if (questions == null) {
             return stats;
@@ -152,21 +180,31 @@ public class ExamConsoleServlet extends HttpServlet {
 
         for (Question question : questions) {
             double marks = question.getMarksAsDouble();
-
             stats.totalMarks += marks;
 
             if (question.isMcq()) {
                 stats.mcqQuestionCount++;
-                stats.mcqMarks += marks;
             }
 
             if (question.isEssay()) {
                 stats.essayQuestionCount++;
-                stats.essayMarks += marks;
             }
         }
 
         return stats;
+    }
+
+    private boolean isStudentAuthenticated(HttpSession session) {
+        if (session == null) {
+            return false;
+        }
+
+        String role = getSessionValue(session, "userRole");
+
+        return session.getAttribute("loggedUser") != null
+                && session.getAttribute("userId") != null
+                && "authenticated".equals(String.valueOf(session.getAttribute("loginStatus")))
+                && User.ROLE_STUDENT.equalsIgnoreCase(role);
     }
 
     private String getStudentDisplayName(HttpSession session) {
@@ -200,6 +238,10 @@ public class ExamConsoleServlet extends HttpServlet {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    private String getRulesSessionKey(String examId) {
+        return "examRulesAccepted_" + FileUtil.clean(examId);
+    }
+
     private void redirectToMyExams(HttpServletRequest request,
                                    HttpServletResponse response,
                                    String messageType,
@@ -231,12 +273,10 @@ public class ExamConsoleServlet extends HttpServlet {
         response.setDateHeader("Expires", 0);
     }
 
-    private static class ExamConsoleStats {
+    private static class ExamRuleStats {
         private int questionCount = 0;
         private int mcqQuestionCount = 0;
         private int essayQuestionCount = 0;
         private double totalMarks = 0.0;
-        private double mcqMarks = 0.0;
-        private double essayMarks = 0.0;
     }
 }
