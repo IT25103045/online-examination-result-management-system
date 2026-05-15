@@ -70,6 +70,18 @@
 
 <div class="exam-pro-shell">
 
+    <!-- Exam Integrity Warning Banner -->
+    <div class="exam-integrity-banner" id="integrityBanner">
+        <div class="exam-integrity-icon">
+            <i class="bi bi-shield-exclamation"></i>
+        </div>
+
+        <div>
+            <strong>Exam Integrity Warning</strong>
+            <p id="integrityMessage">Suspicious exam action detected.</p>
+        </div>
+    </div>
+
     <header class="exam-pro-header">
         <div class="exam-pro-brand">
             <div class="exam-pro-logo">
@@ -95,9 +107,16 @@
             </div>
         </div>
 
-        <div class="exam-pro-timer" id="timerBox">
-            <i class="bi bi-clock-fill"></i>
-            <span id="examTimer">--:--:--</span>
+        <div class="exam-pro-header-actions">
+            <button type="button" class="exam-integrity-fullscreen-btn" id="fullscreenBtn">
+                <i class="bi bi-fullscreen"></i>
+                <span>Fullscreen</span>
+            </button>
+
+            <div class="exam-pro-timer" id="timerBox">
+                <i class="bi bi-clock-fill"></i>
+                <span id="examTimer">--:--:--</span>
+            </div>
         </div>
     </header>
 
@@ -442,6 +461,14 @@
                         </div>
                     </div>
 
+                    <div class="exam-integrity-mini-card">
+                        <div>
+                            <small>Integrity Warnings</small>
+                            <strong id="integrityWarningCount">0</strong>
+                        </div>
+                        <i class="bi bi-shield-exclamation"></i>
+                    </div>
+
                     <div class="exam-pro-side-card">
                         <h5>Exam Breakdown</h5>
 
@@ -618,10 +645,15 @@
     document.addEventListener("DOMContentLoaded", function () {
         const totalQuestions = <%= questionCount %>;
         const durationSeconds = <%= durationMinutes %> * 60;
+        const contextPath = "<%= request.getContextPath() %>";
+        const examId = "<%= exam != null ? FileUtil.h(exam.getExamId()) : "" %>";
 
         let currentQuestion = 1;
         let remainingSeconds = durationSeconds;
         let isSubmitting = false;
+        let integrityWarnings = 0;
+        let lastVisibilityWarningAt = 0;
+        let lastFullscreenWarningAt = 0;
 
         const slides = document.querySelectorAll(".exam-pro-question-slide");
         const paletteButtons = document.querySelectorAll(".exam-pro-palette-btn");
@@ -642,6 +674,11 @@
         const modalAnsweredCount = document.getElementById("modalAnsweredCount");
         const modalUnansweredCount = document.getElementById("modalUnansweredCount");
         const modalFlaggedCount = document.getElementById("modalFlaggedCount");
+
+        const integrityBanner = document.getElementById("integrityBanner");
+        const integrityMessage = document.getElementById("integrityMessage");
+        const integrityWarningCount = document.getElementById("integrityWarningCount");
+        const fullscreenBtn = document.getElementById("fullscreenBtn");
 
         function formatTime(seconds) {
             const safeSeconds = Math.max(0, seconds);
@@ -676,6 +713,8 @@
 
             isSubmitting = true;
             window.onbeforeunload = null;
+
+            logIntegrityEvent("EXAM_SUBMITTED", "Exam auto-submitted because timer ended");
 
             if (finalSubmitBtn) {
                 finalSubmitBtn.disabled = true;
@@ -791,6 +830,59 @@
             updateEssayCounters();
         }
 
+        function showIntegrityWarning(message) {
+            integrityWarnings++;
+
+            if (integrityWarningCount) {
+                integrityWarningCount.textContent = integrityWarnings;
+            }
+
+            if (integrityMessage) {
+                integrityMessage.textContent = message;
+            }
+
+            if (integrityBanner) {
+                integrityBanner.classList.add("show");
+                window.setTimeout(function () {
+                    integrityBanner.classList.remove("show");
+                }, 4500);
+            }
+        }
+
+        function logIntegrityEvent(eventType, description) {
+            if (!examId || (isSubmitting && eventType !== "EXAM_SUBMITTED")) {
+                return;
+            }
+
+            const body = new URLSearchParams();
+            body.append("examId", examId);
+            body.append("eventType", eventType);
+            body.append("description", description);
+
+            fetch(contextPath + "/exam-integrity", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8"
+                },
+                body: body.toString(),
+                keepalive: true
+            }).catch(function () {
+                // Silent fail: exam should not stop if integrity logging request fails.
+            });
+        }
+
+        function requestFullscreenMode() {
+            const root = document.documentElement;
+
+            if (root.requestFullscreen) {
+                root.requestFullscreen().then(function () {
+                    logIntegrityEvent("FULLSCREEN_REQUESTED", "Student entered fullscreen exam mode");
+                }).catch(function () {
+                    showIntegrityWarning("Fullscreen mode could not be started. Continue carefully.");
+                });
+            }
+        }
+
         window.clearAnswer = function (questionId) {
             const radios = document.querySelectorAll("input[type='radio'][name='answer_" + questionId + "']");
             const textarea = document.querySelector("textarea[name='answer_" + questionId + "']");
@@ -837,6 +929,48 @@
             });
         }
 
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener("click", requestFullscreenMode);
+        }
+
+        document.addEventListener("visibilitychange", function () {
+            const now = Date.now();
+
+            if (document.hidden && !isSubmitting && now - lastVisibilityWarningAt > 2500) {
+                lastVisibilityWarningAt = now;
+                showIntegrityWarning("Warning recorded: you switched away from the exam tab.");
+                logIntegrityEvent("TAB_SWITCH", "Student switched away from the exam tab/window");
+            }
+        });
+
+        document.addEventListener("contextmenu", function (event) {
+            event.preventDefault();
+            showIntegrityWarning("Right-click is disabled during the exam.");
+            logIntegrityEvent("RIGHT_CLICK_BLOCKED", "Student attempted to use right-click during exam");
+        });
+
+        document.addEventListener("copy", function (event) {
+            event.preventDefault();
+            showIntegrityWarning("Copy action is disabled during the exam.");
+            logIntegrityEvent("COPY_BLOCKED", "Student attempted to copy content during exam");
+        });
+
+        document.addEventListener("paste", function (event) {
+            event.preventDefault();
+            showIntegrityWarning("Paste action is disabled during the exam.");
+            logIntegrityEvent("PASTE_BLOCKED", "Student attempted to paste content during exam");
+        });
+
+        document.addEventListener("fullscreenchange", function () {
+            const now = Date.now();
+
+            if (!document.fullscreenElement && !isSubmitting && now - lastFullscreenWarningAt > 2500) {
+                lastFullscreenWarningAt = now;
+                showIntegrityWarning("Warning recorded: fullscreen mode was exited.");
+                logIntegrityEvent("FULLSCREEN_EXIT", "Student exited fullscreen mode during exam");
+            }
+        });
+
         if (examForm) {
             examForm.addEventListener("submit", function (event) {
                 if (isSubmitting) {
@@ -846,6 +980,8 @@
 
                 isSubmitting = true;
                 window.onbeforeunload = null;
+
+                logIntegrityEvent("EXAM_SUBMITTED", "Student clicked final submit button");
 
                 if (finalSubmitBtn) {
                     finalSubmitBtn.disabled = true;
@@ -865,6 +1001,8 @@
                 return "Your exam has not been submitted yet. Are you sure you want to leave?";
             }
         };
+
+        logIntegrityEvent("EXAM_STARTED", "Student started the secure exam console");
 
         updateTimer();
         setInterval(updateTimer, 1000);

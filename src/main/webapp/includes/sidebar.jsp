@@ -171,6 +171,12 @@
                 <span>Exam Management</span>
             </a>
 
+            <a class="sidebar-link <%= "integrity".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/integrity">
+                <i class="bi bi-shield-exclamation"></i>
+                <span>Integrity Review</span>
+            </a>
+
             <a class="sidebar-link <%= "questions".equals(sbActiveMenu) ? "active" : "" %>"
                href="<%= request.getContextPath() %>/questions">
                 <i class="bi bi-patch-question-fill"></i>
