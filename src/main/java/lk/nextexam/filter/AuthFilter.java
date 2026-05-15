@@ -55,6 +55,9 @@ import java.util.Set;
         "/documents",
         "/documents/index.jsp",
 
+        "/profile",
+        "/profile/index.jsp",
+
         "/faculties",
         "/faculties/index.jsp",
 
@@ -140,7 +143,10 @@ public class AuthFilter implements Filter {
             "/feedback",
             "/feedback/index.jsp",
             "/documents",
-            "/documents/index.jsp"
+            "/documents/index.jsp",
+            "/profile",
+            "/profile/index.jsp",
+            "/result-pdf"
     );
 
     /*
@@ -242,6 +248,8 @@ public class AuthFilter implements Filter {
 
             "/my-results",
             "/my-results/index.jsp",
+
+            "/result-pdf",
 
             "/exam-console",
             "/exam-console/index.jsp",
