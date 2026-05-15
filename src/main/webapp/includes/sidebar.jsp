@@ -283,6 +283,12 @@
             <span>Feedback</span>
         </a>
 
+        <a class="sidebar-link <%= "notifications".equals(sbActiveMenu) ? "active" : "" %>"
+           href="<%= request.getContextPath() %>/notifications">
+            <i class="bi bi-bell-fill"></i>
+            <span>Notifications</span>
+        </a>
+
         <a class="sidebar-link <%= "documents".equals(sbActiveMenu) ? "active" : "" %>"
            href="<%= request.getContextPath() %>/documents">
             <i class="bi bi-folder-check"></i>

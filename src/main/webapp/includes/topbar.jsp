@@ -1,16 +1,18 @@
 <%--
     Topbar component for Nextexam dashboard layout.
-    Displays page actions, user information, and responsive navigation controls.
+    Displays page actions, user information, notifications, and responsive navigation controls.
     Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
 --%>
 
 <%@ page import="lk.nextexam.dao.FileUtil" %>
+<%@ page import="lk.nextexam.dao.NotificationDAO" %>
 
 <%
     String tbUsername = "";
     String tbDisplayName = "";
     String tbUserRole = "";
     String tbUserEmail = "";
+    String tbUserId = "";
 
     if (session != null) {
         if (session.getAttribute("username") != null) {
@@ -27,6 +29,10 @@
 
         if (session.getAttribute("userEmail") != null) {
             tbUserEmail = session.getAttribute("userEmail").toString();
+        }
+
+        if (session.getAttribute("userId") != null) {
+            tbUserId = session.getAttribute("userId").toString();
         }
     }
 
@@ -71,6 +77,15 @@
     if (tbDisplayUsername != null && !tbDisplayUsername.trim().isEmpty()) {
         tbInitial = tbDisplayUsername.trim().substring(0, 1).toUpperCase();
     }
+
+    NotificationDAO tbNotificationDAO = new NotificationDAO();
+    int tbUnreadNotifications = 0;
+
+    try {
+        tbUnreadNotifications = tbNotificationDAO.countUnreadForUser(application, tbUserId, tbDisplayRole);
+    } catch (Exception e) {
+        tbUnreadNotifications = 0;
+    }
 %>
 
 <header class="topbar">
@@ -108,12 +123,17 @@
     </div>
 
     <div class="topbar-actions">
-        <a href="<%= request.getContextPath() %>/notices"
-           class="notification-btn d-none d-md-inline-flex"
-           title="View notices"
-           aria-label="View notices">
+        <a href="<%= request.getContextPath() %>/notifications"
+           class="notification-btn"
+           title="View notifications"
+           aria-label="View notifications">
             <i class="bi bi-bell-fill"></i>
-            <span class="notification-dot"></span>
+
+            <% if (tbUnreadNotifications > 0) { %>
+                <span class="notification-count">
+                    <%= tbUnreadNotifications > 99 ? "99+" : tbUnreadNotifications %>
+                </span>
+            <% } %>
         </a>
 
         <div class="topbar-user d-none d-lg-flex">
