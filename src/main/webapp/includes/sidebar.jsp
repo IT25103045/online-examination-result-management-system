@@ -283,6 +283,24 @@
             <span>Feedback</span>
         </a>
 
+        <a class="sidebar-link <%= "notifications".equals(sbActiveMenu) ? "active" : "" %>"
+           href="<%= request.getContextPath() %>/notifications">
+            <i class="bi bi-bell-fill"></i>
+            <span>Notifications</span>
+        </a>
+
+        <a class="sidebar-link <%= "documents".equals(sbActiveMenu) ? "active" : "" %>"
+           href="<%= request.getContextPath() %>/documents">
+            <i class="bi bi-folder-check"></i>
+            <span>
+                <% if (sbIsStudent) { %>
+                    My Documents
+                <% } else { %>
+                    Document Verification
+                <% } %>
+            </span>
+        </a>
+
         <!-- System Administration -->
         <% if (sbIsAdmin) { %>
             <div class="sidebar-label">System Administration</div>
@@ -304,6 +322,12 @@
 
         <!-- Account -->
         <div class="sidebar-label">Account</div>
+
+        <a class="sidebar-link <%= "profile".equals(sbActiveMenu) ? "active" : "" %>"
+           href="<%= request.getContextPath() %>/profile">
+            <i class="bi bi-person-circle"></i>
+            <span>My Profile</span>
+        </a>
 
         <a class="sidebar-link" href="<%= request.getContextPath() %>/logout">
             <i class="bi bi-box-arrow-left"></i>

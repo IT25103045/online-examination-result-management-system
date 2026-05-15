@@ -6,14 +6,16 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lk.nextexam.dao.ActivityLogDAO;
+import lk.nextexam.dao.FileUtil;
 
 import java.io.IOException;
 
 /**
  * LogoutServlet handles user logout functionality.
  *
- * It invalidates the current session and redirects the user back to
- * the login page to prevent unauthorized access after logout.
+ * It records the logout action, invalidates the current session,
+ * clears the session cookie, and redirects the user back to the login page.
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
@@ -22,6 +24,8 @@ import java.io.IOException;
 public class LogoutServlet extends HttpServlet {
 
     private static final String SESSION_COOKIE_NAME = "JSESSIONID";
+
+    private final ActivityLogDAO activityLogDAO = new ActivityLogDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -43,16 +47,50 @@ public class LogoutServlet extends HttpServlet {
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
 
-        clearSession(request);
+        HttpSession session = request.getSession(false);
+        logLogoutActivity(session);
+
+        clearSession(session);
         clearSessionCookie(request, response);
         addLogoutSecurityHeaders(response);
 
         response.sendRedirect(request.getContextPath() + "/login.jsp?logout=success");
     }
 
-    private void clearSession(HttpServletRequest request) {
-        HttpSession session = request.getSession(false);
+    /**
+     * Stores logout action before the session is invalidated.
+     */
+    private void logLogoutActivity(HttpSession session) {
+        if (session == null) {
+            return;
+        }
 
+        String userId = getSessionValue(session, "userId");
+        String userRole = getSessionValue(session, "userRole");
+        String displayName = getSessionValue(session, "displayName");
+
+        if (FileUtil.isBlank(userId)) {
+            userId = "UNKNOWN";
+        }
+
+        if (FileUtil.isBlank(userRole)) {
+            userRole = "UNKNOWN";
+        }
+
+        if (FileUtil.isBlank(displayName)) {
+            displayName = "User";
+        }
+
+        activityLogDAO.addLog(
+                getServletContext(),
+                userId,
+                userRole,
+                "LOGOUT",
+                displayName + " logged out from the system"
+        );
+    }
+
+    private void clearSession(HttpSession session) {
         if (session == null) {
             return;
         }
@@ -108,5 +146,14 @@ public class LogoutServlet extends HttpServlet {
         response.setHeader("X-Content-Type-Options", "nosniff");
         response.setHeader("X-Frame-Options", "SAMEORIGIN");
         response.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    }
+
+    private String getSessionValue(HttpSession session, String key) {
+        if (session == null || key == null) {
+            return "";
+        }
+
+        Object value = session.getAttribute(key);
+        return value == null ? "" : String.valueOf(value).trim();
     }
 }

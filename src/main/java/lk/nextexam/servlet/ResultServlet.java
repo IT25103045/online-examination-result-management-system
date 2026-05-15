@@ -1,5 +1,6 @@
 package lk.nextexam.servlet;
-
+import lk.nextexam.dao.NotificationDAO;
+import lk.nextexam.model.Notification;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -12,6 +13,8 @@ import lk.nextexam.model.Result;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import lk.nextexam.dao.NotificationDAO;
+import lk.nextexam.model.Notification;
 
 /**
  * Professional controller for Result Management.
@@ -45,6 +48,7 @@ public class ResultServlet extends HttpServlet {
     private static final String ACTION_PUBLISHED_STATUS = "publishedStatus";
 
     private final ResultDAO resultDAO = new ResultDAO();
+    private final NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -250,6 +254,19 @@ public class ResultServlet extends HttpServlet {
         boolean success = resultDAO.publishResult(getServletContext(), resultId);
 
         if (success) {
+            Result publishedResult = resultDAO.getResultById(getServletContext(), resultId);
+
+            if (publishedResult != null) {
+                notificationDAO.addNotification(
+                        getServletContext(),
+                        publishedResult.getStudentId(),
+                        "Student",
+                        "Result Published",
+                        "Your result for exam " + publishedResult.getExamId() + " has been published.",
+                        Notification.TYPE_RESULT
+                );
+            }
+
             redirectToResults(request, response, "success", "resultPublished");
         } else {
             redirectToResults(request, response, "error", "resultPublishFailed");
