@@ -1,3 +1,36 @@
-Q001|EX001|MCQ|What is encapsulation in OOP?|Private data access control|Parent class inheritance|Same method different forms|Converting code|A|5|Published|Protecting data using private fields and public methods
-Q002|EX001|Essay|Explain inheritance with a Java example.||||||10|Review|Inheritance allows a child class to reuse parent class properties and methods.
-Q003|EX002|MCQ|Which keyword is used to inherit a class in Java?|this|super|extends|implements|C|5|Published|The extends keyword is used for class inheritance in Java.
+Q001|EX001|MCQ|Which OOP concept allows a class to inherit properties and methods from another class?|Encapsulation|Inheritance|Polymorphism|Abstraction|B|5|Active|Inheritance allows one class to acquire fields and methods from another class.
+Q002|EX001|MCQ|Which OOP principle hides internal data and allows access through methods?|Inheritance|Encapsulation|Overloading|Compilation|B|5|Active|Encapsulation hides data using private fields and provides access through getters and setters.
+Q003|EX001|MCQ|Which keyword is used in Java to create an object?|class|new|this|super|B|5|Active|The new keyword is used to create objects in Java.
+Q004|EX001|MCQ|Which feature allows multiple methods with the same name but different parameters?|Method overriding|Method overloading|Inheritance|Abstraction|B|5|Active|Method overloading allows same method name with different parameter lists.
+Q005|EX001|MCQ|Which constructor is automatically called when an object is created?|Destructor|Main method|Constructor|Setter method|C|5|Active|A constructor is called automatically when an object is created.
+Q006|EX001|Essay|Explain the difference between method overloading and method overriding with a simple Java example.|||||10|Active|Method overloading happens in the same class with the same method name and different parameters. Method overriding happens in inheritance when a subclass provides its own implementation of a superclass method.
+Q007|EX001|Essay|Describe how encapsulation improves security and maintainability in Java applications.|||||15|Active|Encapsulation protects object data by keeping fields private and allowing controlled access through methods. It improves maintainability because internal implementation can change without affecting other classes.
+
+Q008|EX002|MCQ|What is the worst case time complexity of linear search?|O(1)|O(log n)|O(n)|O(n log n)|C|5|Active|Linear search may check every element in the worst case.
+Q009|EX002|MCQ|What is the worst case time complexity of binary search?|O(n)|O(log n)|O(n squared)|O(1)|B|5|Active|Binary search halves the search space each step, giving O(log n).
+Q010|EX002|MCQ|Which data structure follows LIFO order?|Queue|Stack|Array|Tree|B|5|Active|Stack follows Last In First Out order.
+Q011|EX002|MCQ|Which data structure follows FIFO order?|Stack|Queue|Graph|Tree|B|5|Active|Queue follows First In First Out order.
+Q012|EX002|MCQ|Which sorting algorithm has worst case time complexity O(n squared)?|Merge Sort|Quick Sort|Insertion Sort|Binary Search|C|5|Active|Insertion sort has O(n squared) worst case complexity.
+Q013|EX002|Essay|Explain Big O notation and why it is important when comparing algorithms.|||||10|Active|Big O notation describes the upper bound growth rate of an algorithm. It helps compare algorithms based on scalability as input size increases.
+Q014|EX002|Essay|Compare stack and queue operations with real world examples.|||||15|Active|A stack uses push and pop with LIFO behavior like undo history. A queue uses enqueue and dequeue with FIFO behavior like a ticket line.
+
+Q015|EX003|MCQ|Which HTTP method is commonly used to submit form data securely to a server?|GET|POST|PUT|TRACE|B|5|Active|POST is commonly used to submit form data to a server.
+Q016|EX003|MCQ|Which file is commonly used to define Maven project dependencies?|package.json|pom.xml|web.xml|index.jsp|B|5|Active|pom.xml is used by Maven to define dependencies and build configuration.
+Q017|EX003|MCQ|Which JSP directive is used to import Java classes?|page import|include file|taglib uri|session false|A|5|Active|The page import directive imports Java classes into JSP.
+Q018|EX003|MCQ|Which servlet annotation maps a servlet to a URL pattern?|@Entity|@WebServlet|@Controller|@Repository|B|5|Active|@WebServlet is used to map a servlet to a URL.
+Q019|EX003|Essay|Explain the MVC pattern in a Java web application using Servlet, JSP, and DAO.|||||20|Active|In MVC, the servlet acts as the controller, JSP acts as the view, and DAO classes handle model/data access. This separates responsibilities and improves maintainability.
+Q020|EX003|Essay|Describe how file handling can be used as a simple storage method in a Java web system.|||||20|Active|File handling can store records in text files using a structured format. DAO classes read, write, update, and delete records while servlets control requests.
+
+Q021|EX004|MCQ|Which SQL command is used to retrieve data from a database table?|INSERT|UPDATE|SELECT|DELETE|C|5|Active|SELECT is used to retrieve data from a database table.
+Q022|EX004|MCQ|Which key uniquely identifies each record in a table?|Foreign key|Primary key|Candidate key|Composite value|B|5|Active|A primary key uniquely identifies each record.
+Q023|EX004|MCQ|Which SQL clause is used to filter records?|ORDER BY|GROUP BY|WHERE|JOIN|C|5|Active|WHERE is used to filter records based on a condition.
+Q024|EX004|MCQ|What does a foreign key represent?|A unique row ID|A link between two tables|A duplicated record|A stored procedure|B|5|Active|A foreign key links a record in one table to a record in another table.
+Q025|EX004|MCQ|Which normal form removes repeating groups?|First Normal Form|Second Normal Form|Third Normal Form|Boyce Codd Normal Form|A|5|Active|First Normal Form removes repeating groups and ensures atomic values.
+Q026|EX004|Essay|Explain the difference between primary key and foreign key using an example.|||||10|Active|A primary key uniquely identifies a row in its own table. A foreign key references the primary key of another table to create a relationship.
+Q027|EX004|Essay|Describe why database normalization is important in academic management systems.|||||15|Active|Normalization reduces data duplication, improves consistency, and makes updates easier in systems such as student, exam, and result management.
+
+Q028|EX005|MCQ|Which communication method is best for sending an official university announcement?|Casual chat|Formal notice|Emoji message|Personal joke|B|5|Active|A formal notice is suitable for official university announcements.
+Q029|EX005|MCQ|Which quality improves credibility in academic communication?|Unclear writing|Incorrect facts|Professional tone|Missing details|C|5|Active|Professional tone improves credibility and trust.
+Q030|EX005|MCQ|What should a student include when requesting a mark recheck?|Only first name|Clear module and concern details|Angry comments|No identification|B|5|Active|A mark recheck request should include clear module and concern details.
+Q031|EX005|Essay|Write a short professional message requesting a lecturer to recheck a midterm mark.|||||10|Active|Dear Sir or Madam, I would like to kindly request a recheck of my midterm marks. My current mark is 35, and I would appreciate clarification if possible. Thank you.
+Q032|EX005|Essay|Explain why respectful tone is important when communicating with university staff.|||||15|Active|Respectful tone helps maintain professionalism, improves the chance of a helpful response, and supports positive academic relationships.
