@@ -6,6 +6,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lk.nextexam.dao.ActivityLogDAO;
 import lk.nextexam.dao.FileUtil;
 import lk.nextexam.dao.UserDAO;
 import lk.nextexam.model.User;
@@ -20,7 +21,8 @@ import java.time.format.DateTimeFormatter;
  * LoginServlet handles user authentication for the Nextexam system.
  *
  * This servlet validates user credentials, creates a user session,
- * and redirects users to the correct dashboard based on their role.
+ * logs successful login activities, and redirects users to the correct
+ * dashboard based on their role.
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
@@ -35,6 +37,7 @@ public class LoginServlet extends HttpServlet {
     private static final String ROLE_STUDENT = "Student";
 
     private final UserDAO userDAO = new UserDAO();
+    private final ActivityLogDAO activityLogDAO = new ActivityLogDAO();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -70,6 +73,7 @@ public class LoginServlet extends HttpServlet {
         }
 
         createAuthenticatedSession(request, user);
+        logSuccessfulLogin(user);
 
         response.sendRedirect(request.getContextPath() + getRoleRedirectPath(user));
     }
@@ -115,6 +119,23 @@ public class LoginServlet extends HttpServlet {
                 .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
 
         session.setMaxInactiveInterval(SESSION_TIMEOUT_SECONDS);
+    }
+
+    /**
+     * Stores successful login action in activity_logs.txt.
+     */
+    private void logSuccessfulLogin(User user) {
+        if (user == null) {
+            return;
+        }
+
+        activityLogDAO.addLog(
+                getServletContext(),
+                user.getUserId(),
+                user.getRole(),
+                "LOGIN",
+                user.getDisplayName() + " logged in successfully as " + user.getRole()
+        );
     }
 
     private boolean isAlreadyAuthenticated(HttpSession session) {
