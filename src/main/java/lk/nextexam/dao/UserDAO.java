@@ -407,6 +407,27 @@ public class UserDAO {
 
         return cleanEmail.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
+    /**
+     * Updates only the profile image path of a user.
+     */
+    public boolean updateProfileImage(ServletContext context, String userId, String profileImagePath) {
+        String cleanUserId = FileUtil.clean(userId);
+        String cleanProfileImagePath = FileUtil.clean(profileImagePath);
+
+        if (cleanUserId.isEmpty()) {
+            return false;
+        }
+
+        User user = getUserById(context, cleanUserId);
+
+        if (user == null) {
+            return false;
+        }
+
+        user.setProfileImage(cleanProfileImagePath);
+
+        return updateUser(context, user);
+    }
 
     /**
      * Future-ready password verification.

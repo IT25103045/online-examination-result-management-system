@@ -5,10 +5,15 @@ import lk.nextexam.dao.FileUtil;
 /**
  * User model represents a system user in Nextexam.
  *
- * This class is used to store common user details such as user ID,
- * username, password, role, and account status. It demonstrates
- * encapsulation by keeping fields private and exposing controlled
- * access through getter and setter methods.
+ * This class stores common user details such as user ID, username,
+ * password, email, role, status, and profile image path.
+ *
+ * Storage format:
+ * userId|username|password|email|role|status|profileImage
+ *
+ * Backward compatibility:
+ * Existing 6-column user records still work. The profileImage field
+ * is optional and defaults to an empty value when missing.
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
@@ -29,6 +34,7 @@ public class User {
     private String email;
     private String role;
     private String status;
+    private String profileImage;
 
     public User() {
     }
@@ -39,12 +45,23 @@ public class User {
                 String email,
                 String role,
                 String status) {
+        this(userId, username, password, email, role, status, "");
+    }
+
+    public User(String userId,
+                String username,
+                String password,
+                String email,
+                String role,
+                String status,
+                String profileImage) {
         this.userId = userId;
         this.username = username;
         this.password = password;
         this.email = email;
         this.role = role;
         this.status = status;
+        this.profileImage = profileImage;
     }
 
     public String getUserId() {
@@ -93,6 +110,18 @@ public class User {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public String getProfileImage() {
+        return safe(profileImage);
+    }
+
+    public void setProfileImage(String profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    public boolean hasProfileImage() {
+        return !getProfileImage().isEmpty();
     }
 
     public boolean isActive() {
@@ -228,7 +257,8 @@ public class User {
                 + FileUtil.clean(getPassword()) + "|"
                 + FileUtil.clean(getEmail()) + "|"
                 + FileUtil.clean(getRole()) + "|"
-                + FileUtil.clean(getStatus());
+                + FileUtil.clean(getStatus()) + "|"
+                + FileUtil.clean(getProfileImage());
     }
 
     public static User fromFileString(String line) {
@@ -242,13 +272,16 @@ public class User {
             return null;
         }
 
+        String imagePath = data.length >= 7 ? data[6] : "";
+
         return new User(
                 data[0],
                 data[1],
                 data[2],
                 data[3],
                 data[4],
-                data[5]
+                data[5],
+                imagePath
         );
     }
 
