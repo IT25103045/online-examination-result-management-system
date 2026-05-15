@@ -19,6 +19,9 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import lk.nextexam.dao.NotificationDAO;
+import lk.nextexam.model.Notification;
+
 
 /**
  * StudentDocumentServlet manages document upload and verification workflow.
@@ -48,6 +51,7 @@ public class StudentDocumentServlet extends HttpServlet {
     private final StudentDocumentDAO documentDAO = new StudentDocumentDAO();
     private final StudentDAO studentDAO = new StudentDAO();
     private final ActivityLogDAO activityLogDAO = new ActivityLogDAO();
+    private final NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -185,6 +189,23 @@ public class StudentDocumentServlet extends HttpServlet {
                 "DOCUMENT_UPLOAD",
                 displayName + " uploaded " + document.getDocumentType()
         );
+        notificationDAO.addNotification(
+                getServletContext(),
+                "",
+                "Admin",
+                "New Document Uploaded",
+                displayName + " uploaded " + document.getDocumentType() + " for verification.",
+                Notification.TYPE_DOCUMENT
+        );
+
+        notificationDAO.addNotification(
+                getServletContext(),
+                "",
+                "Lecturer",
+                "New Document Uploaded",
+                displayName + " uploaded " + document.getDocumentType() + " for verification.",
+                Notification.TYPE_DOCUMENT
+        );
 
         redirect(response, request, "success", "uploaded");
     }
@@ -233,6 +254,18 @@ public class StudentDocumentServlet extends HttpServlet {
                 "DOCUMENT_" + status.toUpperCase(),
                 staffName + " marked document " + documentId + " as " + status
         );
+        StudentDocument updatedDocument = documentDAO.getDocumentById(getServletContext(), documentId);
+
+        if (updatedDocument != null) {
+            notificationDAO.addNotification(
+                    getServletContext(),
+                    updatedDocument.getStudentId(),
+                    "Student",
+                    "Document " + status,
+                    "Your " + updatedDocument.getDocumentType() + " document was marked as " + status + ".",
+                    Notification.TYPE_DOCUMENT
+            );
+        }
 
         redirect(response, request, "success", "statusUpdated");
     }
