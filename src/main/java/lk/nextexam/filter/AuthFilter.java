@@ -96,6 +96,8 @@ import java.util.Set;
 
         "/submit-exam",
 
+        "/exam-integrity",
+
         "/exam-attempts",
         "/exam-attempts/index.jsp",
 
@@ -259,7 +261,9 @@ public class AuthFilter implements Filter {
             "/exam-console",
             "/exam-console/index.jsp",
 
-            "/submit-exam"
+            "/submit-exam",
+
+            "/exam-integrity"
     );
 
     @Override

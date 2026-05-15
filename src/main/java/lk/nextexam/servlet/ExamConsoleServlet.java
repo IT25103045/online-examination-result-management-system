@@ -1,5 +1,6 @@
 package lk.nextexam.servlet;
-
+import lk.nextexam.dao.ExamIntegrityLogDAO;
+import lk.nextexam.model.ExamIntegrityLog;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -36,6 +37,8 @@ public class ExamConsoleServlet extends HttpServlet {
     private final ExamDAO examDAO = new ExamDAO();
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
+    private final ExamIntegrityLogDAO integrityLogDAO = new ExamIntegrityLogDAO();
+
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -113,6 +116,14 @@ public class ExamConsoleServlet extends HttpServlet {
         request.setAttribute("essayMarks", stats.essayMarks);
         request.setAttribute("requiresManualReview", stats.essayQuestionCount > 0);
         request.setAttribute("readinessMessage", readinessMessage);
+
+        integrityLogDAO.addLog(
+                getServletContext(),
+                studentId,
+                examId,
+                ExamIntegrityLog.EVENT_EXAM_STARTED,
+                studentName + " opened the secure exam console"
+        );
 
         request.getRequestDispatcher("/exam-console/index.jsp").forward(request, response);
     }

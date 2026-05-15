@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import lk.nextexam.dao.ExamIntegrityLogDAO;
+import lk.nextexam.model.ExamIntegrityLog;
 
 /**
  * Professional servlet for final exam submission.
@@ -37,6 +39,7 @@ public class ExamSubmissionServlet extends HttpServlet {
     private final ExamDAO examDAO = new ExamDAO();
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
+    private final ExamIntegrityLogDAO integrityLogDAO = new ExamIntegrityLogDAO();
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -122,6 +125,14 @@ public class ExamSubmissionServlet extends HttpServlet {
         boolean saved = submissionDAO.addSubmission(getServletContext(), submission);
 
         if (saved) {
+            integrityLogDAO.addLog(
+                    getServletContext(),
+                    studentId,
+                    examId,
+                    ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
+                    studentName + " submitted final answers"
+            );
+
             redirectToMyExams(request, response, "success", "examSubmitted");
         } else {
             redirectToMyExams(request, response, "error", "submissionFailed");
