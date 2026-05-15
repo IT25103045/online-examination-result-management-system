@@ -589,7 +589,7 @@
                 <div>
                     <h5 class="modal-title fw-bold" id="startExamModalTitle">Start Online Exam</h5>
                     <small class="text-secondary">
-                        Confirm exam details before entering the secure exam console.
+                        Confirm exam details before reading and accepting the exam rules.
                     </small>
                 </div>
 
@@ -676,7 +676,7 @@
 
                 <a href="#" id="confirmStartExamBtn" class="btn btn-primary">
                     <i class="bi bi-play-circle-fill me-2"></i>
-                    Enter Exam Console
+                    Continue to Rules
                 </a>
             </div>
 
@@ -716,7 +716,7 @@
                 document.getElementById("modalExamMode").textContent = mode;
 
                 if (confirmStartExamBtn) {
-                    confirmStartExamBtn.href = "<%= request.getContextPath() %>/exam-console?examId=" + encodeURIComponent(examId);
+                    confirmStartExamBtn.href = "<%= request.getContextPath() %>/exam-rules?examId=" + encodeURIComponent(examId);
                 }
             });
         }
