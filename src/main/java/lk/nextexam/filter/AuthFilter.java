@@ -98,6 +98,9 @@ import java.util.Set;
 
         "/exam-integrity",
 
+        "/integrity",
+        "/integrity/index.jsp",
+
         "/exam-attempts",
         "/exam-attempts/index.jsp",
 
@@ -185,6 +188,9 @@ public class AuthFilter implements Filter {
 
             "/results",
             "/results/index.jsp",
+
+            "/integrity",
+            "/integrity/index.jsp",
 
             "/faculties",
             "/faculties/index.jsp",

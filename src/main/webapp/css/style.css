@@ -3937,3 +3937,178 @@ strong {
         width: 100%;
     }
 }
+/* ================================
+   Exam Integrity Review Dashboard
+================================ */
+.integrity-table {
+    min-width: 1120px;
+}
+
+.integrity-table td:nth-child(6) {
+    max-width: 420px;
+    overflow-wrap: anywhere;
+}
+
+.integrity-risk-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.integrity-risk-item {
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: var(--shadow-xs);
+}
+
+.integrity-risk-item div {
+    min-width: 0;
+}
+
+.integrity-risk-item small {
+    display: block;
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.integrity-risk-item strong {
+    font-size: 30px;
+    font-weight: 950;
+    line-height: 1;
+}
+
+.integrity-risk-item span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+}
+
+.integrity-risk-item.high {
+    background:
+        radial-gradient(circle at top right, rgba(220, 38, 38, 0.10), transparent 36%),
+        #ffffff;
+    border-color: #fecaca;
+}
+
+.integrity-risk-item.high strong {
+    color: var(--danger);
+}
+
+.integrity-risk-item.medium {
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 36%),
+        #ffffff;
+    border-color: #fde68a;
+}
+
+.integrity-risk-item.medium strong {
+    color: var(--warning);
+}
+
+.integrity-risk-item.info {
+    background:
+        radial-gradient(circle at top right, rgba(2, 132, 199, 0.10), transparent 36%),
+        #ffffff;
+    border-color: #bae6fd;
+}
+
+.integrity-risk-item.info strong {
+    color: var(--info);
+}
+
+@media (max-width: 768px) {
+    .integrity-risk-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .integrity-risk-item span {
+        text-align: left;
+    }
+
+    .integrity-table {
+        min-width: 980px;
+    }
+}
+
+/* ================================
+   Sidebar Scroll Improvement
+   Makes long staff navigation easier to use
+================================ */
+
+.sidebar {
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(148, 163, 184, 0.65) transparent;
+}
+
+.sidebar::-webkit-scrollbar {
+    width: 8px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.18);
+    border-radius: 999px;
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.65);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.sidebar::-webkit-scrollbar-thumb:hover {
+    background: rgba(191, 219, 254, 0.85);
+    background-clip: padding-box;
+}
+
+.sidebar-menu {
+    padding-bottom: 18px;
+}
+
+/* Keeps bottom card visible but not blocking menu scrolling */
+.sidebar-note {
+    flex-shrink: 0;
+}
+
+/* Small visual hint that sidebar is scrollable */
+.sidebar::after {
+    content: "Scroll for more";
+    position: sticky;
+    bottom: 0;
+    display: block;
+    margin: 10px 8px 0;
+    padding: 7px 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.72);
+    color: #cbd5e1;
+    font-size: 10px;
+    font-weight: 900;
+    text-align: center;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    backdrop-filter: blur(10px);
+}
+
+/* Hide scroll hint on very short sidebars */
+@media (min-height: 900px) {
+    .sidebar::after {
+        display: none;
+    }
+}
