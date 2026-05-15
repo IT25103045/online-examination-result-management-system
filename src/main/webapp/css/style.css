@@ -4112,3 +4112,210 @@ strong {
         display: none;
     }
 }
+/* ================================
+   Exam Rules Agreement Workflow
+================================ */
+.exam-rules-hero {
+    padding: 30px;
+    border-radius: var(--radius-2xl);
+    background:
+        radial-gradient(circle at top right, rgba(220, 38, 38, 0.11), transparent 32%),
+        radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.10), transparent 30%),
+        linear-gradient(135deg, #ffffff, #f8fafc);
+    border: 1px solid rgba(226, 232, 240, 0.94);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    overflow: hidden;
+}
+
+.exam-rules-hero-content {
+    min-width: 0;
+}
+
+.exam-rules-hero h1 {
+    font-size: clamp(26px, 3vw, 38px);
+    font-weight: 950;
+    letter-spacing: -0.05em;
+    color: var(--dark);
+    margin-bottom: 10px;
+}
+
+.exam-rules-hero p {
+    max-width: 780px;
+    color: var(--muted);
+    font-size: 15px;
+    line-height: 1.7;
+    margin-bottom: 0;
+}
+
+.exam-rules-hero-icon {
+    width: 94px;
+    height: 94px;
+    min-width: 94px;
+    border-radius: 32px;
+    background: linear-gradient(135deg, var(--danger), var(--primary-light));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 42px;
+    box-shadow: 0 18px 42px rgba(220, 38, 38, 0.22);
+}
+
+.exam-rules-agreement-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.exam-rules-agreement-item {
+    padding: 16px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    box-shadow: var(--shadow-xs);
+    transition: all 0.18s ease;
+}
+
+.exam-rules-agreement-item:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.exam-rules-agreement-item i {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 17px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+}
+
+.exam-rules-agreement-item strong {
+    display: block;
+    color: var(--dark);
+    font-size: 15px;
+    font-weight: 950;
+    margin-bottom: 4px;
+}
+
+.exam-rules-agreement-item p {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1.55;
+    margin-bottom: 0;
+}
+
+.exam-rules-agreement-item.danger {
+    border-color: #fecaca;
+    background:
+        radial-gradient(circle at top right, rgba(220, 38, 38, 0.08), transparent 34%),
+        #ffffff;
+}
+
+.exam-rules-agreement-item.danger i {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.exam-rules-agreement-item.warning {
+    border-color: #fde68a;
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.10), transparent 34%),
+        #ffffff;
+}
+
+.exam-rules-agreement-item.warning i {
+    background: var(--warning-soft);
+    color: var(--warning);
+}
+
+.exam-rules-agreement-item.info {
+    border-color: #bae6fd;
+    background:
+        radial-gradient(circle at top right, rgba(2, 132, 199, 0.08), transparent 34%),
+        #ffffff;
+}
+
+.exam-rules-agreement-item.info i {
+    background: var(--info-soft);
+    color: var(--info);
+}
+
+.exam-rules-agreement-item.success {
+    border-color: #bbf7d0;
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.08), transparent 34%),
+        #ffffff;
+}
+
+.exam-rules-agreement-item.success i {
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+.exam-rules-confirm-box {
+    padding: 18px;
+    border-radius: 22px;
+    background:
+        linear-gradient(135deg, rgba(219, 234, 254, 0.72), rgba(240, 249, 255, 0.96)),
+        #ffffff;
+    border: 1px solid #bfdbfe;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    cursor: pointer;
+}
+
+.exam-rules-confirm-box input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.exam-rules-confirm-box span {
+    color: var(--dark);
+    font-size: 14px;
+    font-weight: 850;
+    line-height: 1.6;
+}
+
+#enterExamBtn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+@media (max-width: 768px) {
+    .exam-rules-hero {
+        padding: 22px;
+        align-items: flex-start;
+    }
+
+    .exam-rules-hero-icon {
+        display: none;
+    }
+
+    .exam-rules-agreement-item {
+        padding: 14px;
+    }
+
+    .exam-rules-agreement-item i {
+        width: 38px;
+        height: 38px;
+        min-width: 38px;
+        border-radius: 15px;
+        font-size: 17px;
+    }
+}
