@@ -177,6 +177,12 @@
                 <span>Integrity Review</span>
             </a>
 
+            <a class="sidebar-link <%= "submissions".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/submissions">
+                <i class="bi bi-inboxes-fill"></i>
+                <span>Submissions</span>
+            </a>
+
             <a class="sidebar-link <%= "questions".equals(sbActiveMenu) ? "active" : "" %>"
                href="<%= request.getContextPath() %>/questions">
                 <i class="bi bi-patch-question-fill"></i>
