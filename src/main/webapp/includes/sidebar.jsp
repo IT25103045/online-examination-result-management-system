@@ -110,6 +110,11 @@
                 <i class="bi bi-bar-chart-fill"></i>
                 <span>My Results</span>
             </a>
+            <a class="sidebar-link <%= "result-appeals".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/result-appeals">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Result Appeals</span>
+            </a>
         <% } %>
 
         <!-- Academic / Administration -->
@@ -193,6 +198,11 @@
                href="<%= request.getContextPath() %>/results">
                 <i class="bi bi-bar-chart-fill"></i>
                 <span>Results</span>
+            </a>
+            <a class="sidebar-link <%= "result-appeals".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/result-appeals">
+                <i class="bi bi-arrow-repeat"></i>
+                <span>Result Appeals</span>
             </a>
 
             <% if (showResultExpansion) { %>

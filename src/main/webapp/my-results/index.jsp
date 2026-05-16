@@ -86,6 +86,11 @@
                             My Exams
                         </a>
 
+                        <a href="<%= request.getContextPath() %>/result-appeals" class="btn btn-outline-primary">
+                            <i class="bi bi-arrow-repeat me-2"></i>
+                            Result Appeals
+                        </a>
+
                         <a href="<%= request.getContextPath() %>/notices" class="btn btn-outline-primary">
                             <i class="bi bi-megaphone-fill me-2"></i>
                             Notices
@@ -195,7 +200,7 @@
                                     <th>Status</th>
                                     <th>Verification</th>
                                     <th>Performance</th>
-                                    <th>PDF</th>
+                                    <th>Actions</th>
                                 </tr>
                                 </thead>
 
@@ -249,11 +254,19 @@
                                         </td>
 
                                         <td>
-                                            <a href="<%= request.getContextPath() %>/result-pdf?id=<%= FileUtil.h(result.getResultId()) %>"
-                                               class="btn btn-sm btn-outline-primary">
-                                                <i class="bi bi-file-earmark-pdf me-1"></i>
-                                                Download
-                                            </a>
+                                            <div class="action-group justify-content-start">
+                                                <a href="<%= request.getContextPath() %>/result-pdf?id=<%= FileUtil.h(result.getResultId()) %>"
+                                                   class="btn btn-sm btn-outline-primary">
+                                                    <i class="bi bi-file-earmark-pdf me-1"></i>
+                                                    PDF
+                                                </a>
+
+                                                <a href="<%= request.getContextPath() %>/result-appeals?resultId=<%= FileUtil.h(result.getResultId()) %>"
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="bi bi-arrow-repeat me-1"></i>
+                                                    Recheck
+                                                </a>
+                                            </div>
                                         </td>
                                     </tr>
                                 <% }

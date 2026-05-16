@@ -91,6 +91,9 @@ import java.util.Set;
         "/my-results",
         "/my-results/index.jsp",
 
+        "/result-appeals",
+        "/result-appeals/index.jsp",
+
         "/exam-rules",
         "/exam-rules/index.jsp",
 
@@ -167,7 +170,10 @@ public class AuthFilter implements Filter {
             "/profile/index.jsp",
             "/notifications",
             "/notifications/index.jsp",
-            "/result-pdf"
+            "/result-pdf",
+
+            "/result-appeals",
+            "/result-appeals/index.jsp"
     );
 
     /*
