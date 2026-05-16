@@ -1,11 +1,10 @@
 <%--
     Main dashboard page for Nextexam.
-    Displays role-based dashboard content and quick access cards
-    for Admin and Lecturer users.
+    Displays role-based dashboard content, analytics, priority work queue,
+    and quick access cards for Admin and Lecturer users.
 
-    Enhancement:
-    - Added Activity Log System support
-    - Displays latest login/logout activities from activity_logs.txt
+    Enhancement Pack 14:
+    Admin Dashboard Analytics Upgrade
 
     Responsible Member:
     IT25103045 - De Silva H.L.D.C.P.C
@@ -16,7 +15,6 @@
 <%@ page import="java.util.List" %>
 
 <%@ page import="lk.nextexam.dao.FileUtil" %>
-<%@ page import="lk.nextexam.dao.ActivityLogDAO" %>
 <%@ page import="lk.nextexam.dao.StudentDAO" %>
 <%@ page import="lk.nextexam.dao.ExamDAO" %>
 <%@ page import="lk.nextexam.dao.QuestionDAO" %>
@@ -25,8 +23,10 @@
 <%@ page import="lk.nextexam.dao.NoticeDAO" %>
 <%@ page import="lk.nextexam.dao.FeedbackDAO" %>
 <%@ page import="lk.nextexam.dao.ExamSubmissionDAO" %>
+<%@ page import="lk.nextexam.dao.ActivityLogDAO" %>
+<%@ page import="lk.nextexam.dao.ResultAppealDAO" %>
+<%@ page import="lk.nextexam.dao.NotificationDAO" %>
 
-<%@ page import="lk.nextexam.model.ActivityLog" %>
 <%@ page import="lk.nextexam.model.Student" %>
 <%@ page import="lk.nextexam.model.Exam" %>
 <%@ page import="lk.nextexam.model.Question" %>
@@ -34,6 +34,8 @@
 <%@ page import="lk.nextexam.model.User" %>
 <%@ page import="lk.nextexam.model.Notice" %>
 <%@ page import="lk.nextexam.model.Feedback" %>
+<%@ page import="lk.nextexam.model.ActivityLog" %>
+<%@ page import="lk.nextexam.model.ResultAppeal" %>
 
 <%
     String pageTitle = "Dashboard";
@@ -61,6 +63,8 @@
     FeedbackDAO feedbackDAO = new FeedbackDAO();
     ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
     ActivityLogDAO activityLogDAO = new ActivityLogDAO();
+    ResultAppealDAO appealDAO = new ResultAppealDAO();
+    NotificationDAO notificationDAO = new NotificationDAO();
 
     List<Student> students = studentDAO.getAllStudents(application);
     List<Exam> exams = examDAO.getAllExams(application);
@@ -69,7 +73,7 @@
     List<User> users = userDAO.getAllUsers(application);
     List<Notice> notices = noticeDAO.getAllNotices(application);
     List<Feedback> feedbackList = feedbackDAO.getAllFeedback(application);
-    List<ActivityLog> latestLogs = activityLogDAO.getLatestLogs(application, 6);
+    List<ActivityLog> recentLogs = new java.util.ArrayList<ActivityLog>();
 
     int totalStudents = students != null ? students.size() : 0;
     int totalExams = exams != null ? exams.size() : 0;
@@ -78,7 +82,7 @@
     int totalUsers = users != null ? users.size() : 0;
     int totalNotices = notices != null ? notices.size() : 0;
     int totalFeedback = feedbackList != null ? feedbackList.size() : 0;
-    int totalActivityLogs = activityLogDAO.countLogs(application);
+    int totalActivityLogs = 0;
 
     int draftExams = examDAO.countDraftExams(application);
     int scheduledExams = examDAO.countScheduledExams(application);
@@ -96,13 +100,29 @@
     int markedAttempts = submissionDAO.countMarked(application);
     int publishedAttempts = submissionDAO.countPublished(application);
 
+    int totalAppeals = appealDAO.countAll(application);
+    int pendingAppeals = appealDAO.countByStatus(application, ResultAppeal.STATUS_PENDING);
+    int underReviewAppeals = appealDAO.countByStatus(application, ResultAppeal.STATUS_UNDER_REVIEW);
+    int resolvedAppeals = appealDAO.countByStatus(application, ResultAppeal.STATUS_RESOLVED);
+    int rejectedAppeals = appealDAO.countByStatus(application, ResultAppeal.STATUS_REJECTED);
+
+    int totalNotifications = notificationDAO.getAllNotifications(application).size();
+    int adminUnreadNotifications = notificationDAO.countUnreadForUser(application, "", "Admin");
+    int lecturerUnreadNotifications = notificationDAO.countUnreadForUser(application, "", "Lecturer");
+    int studentUnreadNotifications = notificationDAO.countUnreadForUser(application, "", "Student");
+    int totalUnreadNotifications = adminUnreadNotifications + lecturerUnreadNotifications + studentUnreadNotifications;
+
     int eligibleStudents = 0;
     int pendingStudents = 0;
+    int blockedStudents = 0;
+
     int publishedResults = 0;
     int verifiedResults = 0;
+
     int newFeedback = 0;
     int reviewedFeedback = 0;
     int pendingFeedback = 0;
+
     int activeUsers = userDAO.countActiveUsers(application);
     int studentUsers = userDAO.countStudents(application);
     int lecturerUsers = userDAO.countLecturers(application);
@@ -122,6 +142,8 @@
                 eligibleStudents++;
             } else if ("Pending".equalsIgnoreCase(student.getExamStatus())) {
                 pendingStudents++;
+            } else if ("Blocked".equalsIgnoreCase(student.getExamStatus())) {
+                blockedStudents++;
             }
         }
     }
@@ -162,6 +184,31 @@
     int studentEligibility = totalStudents > 0 ? (eligibleStudents * 100) / totalStudents : 0;
     int feedbackReviewRate = totalFeedback > 0 ? (reviewedFeedback * 100) / totalFeedback : 0;
     int attemptPublishRate = submittedAttempts > 0 ? (publishedAttempts * 100) / submittedAttempts : 0;
+
+    int manualReviewRate = submittedAttempts > 0 ? (manualReviewAttempts * 100) / submittedAttempts : 0;
+    int markingCompletionRate = submittedAttempts > 0
+            ? ((autoMarkedAttempts + markedAttempts + publishedAttempts) * 100) / submittedAttempts
+            : 0;
+    int appealResolutionRate = totalAppeals > 0
+            ? ((resolvedAppeals + rejectedAppeals) * 100) / totalAppeals
+            : 0;
+    int notificationReadRate = totalNotifications > 0
+            ? ((totalNotifications - totalUnreadNotifications) * 100) / totalNotifications
+            : 0;
+
+    int academicRiskScore = manualReviewAttempts + pendingAppeals + pendingFeedback + newFeedback + totalUnreadNotifications;
+
+    String academicRiskLabel = academicRiskScore == 0
+            ? "Stable"
+            : academicRiskScore <= 5
+                ? "Moderate"
+                : "Needs Attention";
+
+    String academicRiskBadge = academicRiskScore == 0
+            ? "badge-soft-success"
+            : academicRiskScore <= 5
+                ? "badge-soft-warning"
+                : "badge-soft-danger";
 
     Notice latestNotice = null;
     if (notices != null && !notices.isEmpty()) {
@@ -204,7 +251,8 @@
 
                         <p class="hero-text">
                             Monitor students, exams, question banks, submissions, manual review queues,
-                            published results, notices, feedback, and platform user activity from one secure workspace.
+                            published results, notices, feedback, appeals, notifications, and platform user activity
+                            from one secure workspace.
                         </p>
                     </div>
 
@@ -229,7 +277,7 @@
                             <div>
                                 <div class="stat-label">Students</div>
                                 <div class="stat-value"><%= totalStudents %></div>
-                                <div class="stat-meta">Candidate records</div>
+                                <div class="stat-meta"><%= eligibleStudents %> eligible · <%= pendingStudents %> pending</div>
                             </div>
 
                             <div class="stat-icon">
@@ -283,6 +331,155 @@
                             <div class="stat-icon">
                                 <i class="bi bi-send-check-fill"></i>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Admin Analytics Upgrade -->
+            <div class="row g-4 mb-4">
+                <div class="col-xl-8">
+                    <div class="app-card p-4 h-100 admin-analytics-card">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                            <div>
+                                <h4 class="fw-bold mb-1">Executive Analytics Snapshot</h4>
+                                <p class="text-secondary mb-0">
+                                    Decision-support overview for academic operations, marking progress, appeals, and notifications.
+                                </p>
+                            </div>
+
+                            <span class="badge <%= academicRiskBadge %>">
+                                <i class="bi bi-shield-exclamation me-1"></i>
+                                <%= academicRiskLabel %>
+                            </span>
+                        </div>
+
+                        <div class="dashboard-analytics-grid">
+                            <div class="dashboard-analytics-tile success">
+                                <div>
+                                    <small>Marking Completion</small>
+                                    <strong><%= markingCompletionRate %>%</strong>
+                                    <span><%= autoMarkedAttempts + markedAttempts + publishedAttempts %> processed attempts</span>
+                                </div>
+                                <i class="bi bi-check2-circle"></i>
+                            </div>
+
+                            <div class="dashboard-analytics-tile warning">
+                                <div>
+                                    <small>Manual Review Load</small>
+                                    <strong><%= manualReviewRate %>%</strong>
+                                    <span><%= manualReviewAttempts %> submissions need essay review</span>
+                                </div>
+                                <i class="bi bi-pencil-square"></i>
+                            </div>
+
+                            <div class="dashboard-analytics-tile primary">
+                                <div>
+                                    <small>Appeal Resolution</small>
+                                    <strong><%= appealResolutionRate %>%</strong>
+                                    <span><%= pendingAppeals %> pending appeals</span>
+                                </div>
+                                <i class="bi bi-arrow-repeat"></i>
+                            </div>
+
+                            <div class="dashboard-analytics-tile info">
+                                <div>
+                                    <small>Notification Read Rate</small>
+                                    <strong><%= notificationReadRate %>%</strong>
+                                    <span><%= totalUnreadNotifications %> unread notifications</span>
+                                </div>
+                                <i class="bi bi-bell-fill"></i>
+                            </div>
+                        </div>
+
+                        <div class="dashboard-progress-list mt-4">
+                            <div class="dashboard-progress-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Submission Publishing</span>
+                                    <strong><%= attemptPublishRate %>%</strong>
+                                </div>
+
+                                <div class="progress dashboard-progress">
+                                    <div class="progress-bar" style="width:<%= attemptPublishRate %>%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-progress-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Question Bank Readiness</span>
+                                    <strong><%= questionCompletion %>%</strong>
+                                </div>
+
+                                <div class="progress dashboard-progress">
+                                    <div class="progress-bar bg-success" style="width:<%= questionCompletion %>%;"></div>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-progress-item">
+                                <div class="d-flex justify-content-between mb-1">
+                                    <span>Feedback Review Rate</span>
+                                    <strong><%= feedbackReviewRate %>%</strong>
+                                </div>
+
+                                <div class="progress dashboard-progress">
+                                    <div class="progress-bar bg-warning" style="width:<%= feedbackReviewRate %>%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-4">
+                    <div class="app-card p-4 h-100 admin-task-card">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h4 class="fw-bold mb-1">Priority Work Queue</h4>
+                                <p class="text-secondary mb-0">
+                                    Items that need staff attention.
+                                </p>
+                            </div>
+
+                            <span class="badge <%= academicRiskBadge %>">
+                                <%= academicRiskScore %> Tasks
+                            </span>
+                        </div>
+
+                        <div class="priority-task-list">
+                            <a href="<%= request.getContextPath() %>/submissions" class="priority-task-item warning">
+                                <div>
+                                    <small>Manual Marking</small>
+                                    <strong><%= manualReviewAttempts %></strong>
+                                    <span>Essay submissions pending review</span>
+                                </div>
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+
+                            <a href="<%= request.getContextPath() %>/result-appeals" class="priority-task-item primary">
+                                <div>
+                                    <small>Result Appeals</small>
+                                    <strong><%= pendingAppeals %></strong>
+                                    <span>Student recheck requests pending</span>
+                                </div>
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+
+                            <a href="<%= request.getContextPath() %>/feedback" class="priority-task-item info">
+                                <div>
+                                    <small>Feedback</small>
+                                    <strong><%= pendingFeedback + newFeedback %></strong>
+                                    <span>Messages awaiting staff response</span>
+                                </div>
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
+
+                            <a href="<%= request.getContextPath() %>/notifications" class="priority-task-item danger">
+                                <div>
+                                    <small>Notifications</small>
+                                    <strong><%= totalUnreadNotifications %></strong>
+                                    <span>Unread role-based notifications</span>
+                                </div>
+                                <i class="bi bi-chevron-right"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -539,6 +736,19 @@
                             </div>
 
                             <div class="col-md-6 col-xl-4">
+                                <a href="<%= request.getContextPath() %>/submissions">
+                                    <div class="app-card quick-card">
+                                        <div class="quick-icon">
+                                            <i class="bi bi-inboxes-fill"></i>
+                                        </div>
+
+                                        <h5>Submissions</h5>
+                                        <p>Review submitted attempts, MCQ answers, and essay responses.</p>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-md-6 col-xl-4">
                                 <a href="<%= request.getContextPath() %>/results">
                                     <div class="app-card quick-card">
                                         <div class="quick-icon">
@@ -547,6 +757,32 @@
 
                                         <h5>Results</h5>
                                         <p>Manage result records, grading, verification, and publishing.</p>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-md-6 col-xl-4">
+                                <a href="<%= request.getContextPath() %>/result-appeals">
+                                    <div class="app-card quick-card">
+                                        <div class="quick-icon">
+                                            <i class="bi bi-arrow-repeat"></i>
+                                        </div>
+
+                                        <h5>Result Appeals</h5>
+                                        <p>Review student result recheck requests and update appeal status.</p>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-md-6 col-xl-4">
+                                <a href="<%= request.getContextPath() %>/notifications">
+                                    <div class="app-card quick-card">
+                                        <div class="quick-icon">
+                                            <i class="bi bi-bell-fill"></i>
+                                        </div>
+
+                                        <h5>Notifications</h5>
+                                        <p>View important academic updates and role-based alerts.</p>
                                     </div>
                                 </a>
                             </div>
@@ -598,68 +834,56 @@
 
             <div class="row g-4">
                 <div class="col-xl-4">
-                    <div class="app-card p-4 h-100 activity-log-card">
+                    <div class="app-card p-4 h-100">
                         <div class="d-flex justify-content-between align-items-start mb-3">
                             <div>
-                                <h4 class="fw-bold mb-1">Recent System Activity</h4>
-                                <p class="text-secondary mb-0">Latest user actions</p>
+                                <h4 class="fw-bold mb-1">Recent Activity</h4>
+                                <p class="text-secondary mb-0">Latest platform summary</p>
                             </div>
 
-                            <span class="badge badge-soft-primary">
-                                <i class="bi bi-activity me-1"></i>
-                                <%= totalActivityLogs %> Logs
-                            </span>
+                            <span class="badge badge-soft-secondary">Live</span>
                         </div>
 
-                        <% if (latestLogs == null || latestLogs.isEmpty()) { %>
-                            <div class="empty-state py-4">
-                                <div class="empty-state-icon">
-                                    <i class="bi bi-clock-history"></i>
-                                </div>
-                                <h5>No activity logs yet</h5>
-                                <p>Login and logout actions will appear here.</p>
-                            </div>
-                        <% } else { %>
-                            <div class="activity-log-list">
-                                <% for (ActivityLog log : latestLogs) { %>
-                                    <div class="activity-log-item">
-                                        <div class="activity-log-icon">
-                                            <% if ("LOGIN".equalsIgnoreCase(log.getAction())) { %>
-                                                <i class="bi bi-box-arrow-in-right"></i>
-                                            <% } else if ("LOGOUT".equalsIgnoreCase(log.getAction())) { %>
-                                                <i class="bi bi-box-arrow-right"></i>
-                                            <% } else { %>
-                                                <i class="bi bi-activity"></i>
-                                            <% } %>
-                                        </div>
-
-                                        <div class="activity-log-content">
-                                            <div class="activity-log-top">
-                                                <span class="activity-log-action">
-                                                    <%= FileUtil.h(log.getAction()) %>
-                                                </span>
-
-                                                <span class="activity-log-role">
-                                                    <%= FileUtil.h(log.getUserRole()) %>
-                                                </span>
-                                            </div>
-
-                                            <div class="activity-log-description">
-                                                <%= FileUtil.h(log.getDescription()) %>
-                                            </div>
-
-                                            <div class="activity-log-meta">
-                                                <i class="bi bi-person-badge me-1"></i>
-                                                <%= FileUtil.h(log.getUserId()) %>
-                                                <span class="mx-2">•</span>
-                                                <i class="bi bi-calendar-event me-1"></i>
-                                                <%= FileUtil.h(log.getCreatedAt()) %>
-                                            </div>
-                                        </div>
+                        <% if (recentLogs != null && !recentLogs.isEmpty()) { %>
+                            <% for (ActivityLog log : recentLogs) { %>
+                                <div class="activity-item">
+                                    <div class="activity-title">
+                                        <%= FileUtil.h(log.getAction()) %>
                                     </div>
-                                <% } %>
+                                    <small class="text-secondary">
+                                        <%= FileUtil.h(log.getDescription()) %>
+                                        <br>
+                                        <%= FileUtil.h(log.getCreatedAt()) %>
+                                    </small>
+                                </div>
+                            <% } %>
+                        <% } else { %>
+                            <div class="activity-item">
+                                <div class="activity-title">Student records available</div>
+                                <small class="text-secondary"><%= totalStudents %> candidates saved in the system.</small>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-title">Exam records available</div>
+                                <small class="text-secondary"><%= totalExams %> total exams, <%= attemptableExams %> currently attemptable.</small>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-title">Question bank updated</div>
+                                <small class="text-secondary"><%= totalQuestions %> questions saved, <%= draftQuestions %> in draft.</small>
+                            </div>
+
+                            <div class="activity-item">
+                                <div class="activity-title">Submission workflow</div>
+                                <small class="text-secondary"><%= submittedAttempts %> submissions, <%= manualReviewAttempts %> awaiting manual review.</small>
                             </div>
                         <% } %>
+
+                        <div class="mt-3">
+                            <small class="text-secondary">
+                                Total activity logs: <%= totalActivityLogs %>
+                            </small>
+                        </div>
                     </div>
                 </div>
 
@@ -742,6 +966,25 @@
                             <small class="text-secondary d-block mt-2">
                                 <%= feedbackReviewRate %>% of feedback messages have been reviewed.
                             </small>
+                        </div>
+
+                        <div class="soft-divider"></div>
+
+                        <div class="feedback-card shadow-none">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Pending Appeals</span>
+                                <span class="fw-bold"><%= pendingAppeals %></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between mb-2">
+                                <span class="text-secondary">Under Review</span>
+                                <span class="fw-bold"><%= underReviewAppeals %></span>
+                            </div>
+
+                            <div class="d-flex justify-content-between">
+                                <span class="text-secondary">Resolved / Rejected</span>
+                                <span class="fw-bold"><%= resolvedAppeals %> / <%= rejectedAppeals %></span>
+                            </div>
                         </div>
                     </div>
                 </div>
