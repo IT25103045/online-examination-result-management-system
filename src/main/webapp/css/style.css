@@ -4319,3 +4319,421 @@ strong {
         font-size: 17px;
     }
 }
+/* ================================
+   Submission Review Dashboard
+================================ */
+.submission-table {
+    min-width: 1120px;
+}
+
+.submission-review-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.submission-review-item {
+    padding: 16px;
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: var(--shadow-xs);
+}
+
+.submission-review-item small {
+    display: block;
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
+    margin-bottom: 4px;
+}
+
+.submission-review-item strong {
+    font-size: 30px;
+    font-weight: 950;
+    line-height: 1;
+}
+
+.submission-review-item span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
+}
+
+.submission-review-item.warning {
+    background:
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 36%),
+        #ffffff;
+    border-color: #fde68a;
+}
+
+.submission-review-item.warning strong {
+    color: var(--warning);
+}
+
+.submission-review-item.primary {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 36%),
+        #ffffff;
+    border-color: #bfdbfe;
+}
+
+.submission-review-item.primary strong {
+    color: var(--primary-light);
+}
+
+.submission-review-item.success {
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.10), transparent 36%),
+        #ffffff;
+    border-color: #bbf7d0;
+}
+
+.submission-review-item.success strong {
+    color: var(--success);
+}
+
+.submission-answer-card {
+    padding: 18px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    box-shadow: var(--shadow-xs);
+    margin-bottom: 16px;
+}
+
+.submission-answer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.submission-answer-mark {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--dark);
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.submission-question-text {
+    color: var(--dark);
+    font-size: 15px;
+    line-height: 1.65;
+    margin-bottom: 10px;
+}
+
+.submission-answer-box {
+    min-height: 96px;
+    padding: 15px;
+    border-radius: 20px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+}
+
+.submission-answer-box small {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+
+.submission-answer-box strong {
+    color: var(--dark);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.submission-answer-box p {
+    color: var(--dark);
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.7;
+    margin-bottom: 0;
+    white-space: pre-wrap;
+}
+
+.submission-answer-box.correct {
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.10), transparent 34%),
+        #ffffff;
+    border-color: #bbf7d0;
+}
+
+.submission-answer-box.correct small {
+    color: var(--success);
+}
+
+.submission-answer-box.wrong {
+    background:
+        radial-gradient(circle at top right, rgba(220, 38, 38, 0.08), transparent 34%),
+        #ffffff;
+    border-color: #fecaca;
+}
+
+.submission-answer-box.wrong small {
+    color: var(--danger);
+}
+
+.submission-answer-box.essay {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34%),
+        #ffffff;
+    border-color: #bfdbfe;
+}
+
+.submission-answer-box.model {
+    background:
+        radial-gradient(circle at top right, rgba(2, 132, 199, 0.08), transparent 34%),
+        #ffffff;
+    border-color: #bae6fd;
+}
+
+@media (max-width: 768px) {
+    .submission-table {
+        min-width: 980px;
+    }
+
+    .submission-review-item {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .submission-review-item span {
+        text-align: left;
+    }
+
+    .submission-answer-head {
+        align-items: flex-start;
+    }
+}
+/* ================================
+   Submission Review UI Jam Fix
+   Prevents table/modal/topbar overflow
+================================ */
+
+/* Main layout safety */
+.app-shell,
+.main-content,
+.page-wrapper,
+.app-card,
+.crud-card,
+.hero-card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* Prevent long text from breaking layout */
+.submission-table,
+.submission-table th,
+.submission-table td,
+.submission-answer-card,
+.submission-answer-box,
+.submission-question-text {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+/* Keep submission table scrollable instead of squeezing page */
+.submission-table {
+    min-width: 1050px;
+}
+
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Prevent table cells becoming too wide */
+.submission-table td:nth-child(2),
+.submission-table td:nth-child(3),
+.submission-table td:nth-child(7) {
+    max-width: 180px;
+}
+
+.submission-table td:nth-child(4) {
+    max-width: 170px;
+}
+
+.submission-table td:nth-child(8) {
+    max-width: 120px;
+}
+
+/* Better toolbar wrapping */
+.crud-toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.crud-toolbar > div {
+    min-width: 0;
+}
+
+.crud-toolbar .d-flex {
+    min-width: 0;
+    max-width: 100%;
+}
+
+#submissionSearch {
+    min-width: 0;
+}
+
+/* Modal overflow protection */
+.modal-dialog.modal-xl {
+    max-width: min(96vw, 1180px);
+}
+
+.modal-content {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.modal-body {
+    overflow-x: hidden;
+}
+
+.submission-answer-card {
+    max-width: 100%;
+}
+
+.submission-answer-head {
+    min-width: 0;
+}
+
+.submission-answer-head > div {
+    min-width: 0;
+}
+
+.submission-answer-box {
+    max-width: 100%;
+}
+
+/* Essay/model answers should scroll vertically, not stretch page */
+.submission-answer-box.essay,
+.submission-answer-box.model {
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+/* KPI review cards should wrap nicely */
+.submission-review-item {
+    min-width: 0;
+}
+
+.submission-review-item div,
+.submission-review-item span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+/* Topbar safety after adding many pages */
+.topbar {
+    min-width: 0;
+}
+
+.topbar-left,
+.topbar-title-wrap {
+    min-width: 0;
+}
+
+.topbar-actions {
+    min-width: 0;
+    flex-shrink: 0;
+}
+
+/* Medium screens */
+@media (max-width: 1199px) {
+    .submission-table {
+        min-width: 980px;
+    }
+
+    .crud-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .crud-toolbar .d-flex,
+    .crud-toolbar .input-group,
+    .crud-toolbar .form-select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+/* Tablet and mobile */
+@media (max-width: 768px) {
+    .submission-table {
+        min-width: 900px;
+    }
+
+    .submission-review-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .submission-review-item span {
+        text-align: left;
+    }
+
+    .submission-answer-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .submission-answer-mark {
+        width: fit-content;
+    }
+
+    .modal-dialog.modal-xl {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .submission-answer-card {
+        padding: 14px;
+        border-radius: 20px;
+    }
+
+    .submission-answer-box {
+        min-height: auto;
+    }
+}
+
+/* Very small screens */
+@media (max-width: 480px) {
+    .submission-table {
+        min-width: 820px;
+    }
+
+    .hero-card .btn,
+    .crud-toolbar .btn {
+        width: 100%;
+    }
+
+    .submission-answer-box.essay,
+    .submission-answer-box.model {
+        max-height: 220px;
+    }
+}
