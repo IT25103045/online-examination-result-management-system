@@ -5287,3 +5287,79 @@ strong {
         align-items: flex-start;
     }
 }
+/* ================================
+   CSV Export Reports Workflow
+================================ */
+.report-export-card {
+    height: 100%;
+    padding: 24px;
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.09), transparent 34%),
+        #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.18s ease;
+}
+
+.report-export-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.report-export-icon {
+    width: 58px;
+    height: 58px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+}
+
+.report-export-card h4 {
+    color: var(--dark);
+    font-size: 18px;
+    font-weight: 950;
+    margin-bottom: 0;
+}
+
+.report-export-card p {
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.65;
+    margin-bottom: 6px;
+    flex: 1;
+}
+
+.report-note-icon {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 18px;
+    background: var(--info-soft);
+    color: var(--info);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+}
+
+@media (max-width: 768px) {
+    .report-export-card {
+        padding: 18px;
+        border-radius: 22px;
+    }
+
+    .report-export-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 19px;
+        font-size: 21px;
+    }
+}
