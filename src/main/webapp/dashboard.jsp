@@ -787,6 +787,19 @@
                                 </a>
                             </div>
 
+                            <div class="col-md-6 col-xl-4">
+                                <a href="<%= request.getContextPath() %>/reports">
+                                    <div class="app-card quick-card">
+                                        <div class="quick-icon">
+                                            <i class="bi bi-filetype-csv"></i>
+                                        </div>
+
+                                        <h5>Export Reports</h5>
+                                        <p>Download students, exams, submissions, results, appeals, and feedback as CSV files.</p>
+                                    </div>
+                                </a>
+                            </div>
+
                             <% if (isAdmin) { %>
                                 <div class="col-md-6 col-xl-4">
                                     <a href="<%= request.getContextPath() %>/users">

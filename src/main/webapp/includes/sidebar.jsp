@@ -199,6 +199,11 @@
                 <i class="bi bi-bar-chart-fill"></i>
                 <span>Results</span>
             </a>
+            <a class="sidebar-link <%= "reports".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/reports">
+                <i class="bi bi-filetype-csv"></i>
+                <span>Reports</span>
+            </a>
             <a class="sidebar-link <%= "result-appeals".equals(sbActiveMenu) ? "active" : "" %>"
                href="<%= request.getContextPath() %>/result-appeals">
                 <i class="bi bi-arrow-repeat"></i>
