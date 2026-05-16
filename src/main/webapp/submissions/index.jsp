@@ -468,13 +468,23 @@
                                     </td>
 
                                     <td class="text-end">
-                                        <button type="button"
-                                                class="btn btn-sm btn-outline-primary"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#<%= modalId %>">
-                                            <i class="bi bi-eye me-1"></i>
-                                            Review
-                                        </button>
+                                        <div class="action-group justify-content-end">
+                                            <button type="button"
+                                                    class="btn btn-sm btn-outline-primary"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#<%= modalId %>">
+                                                <i class="bi bi-eye me-1"></i>
+                                                Review
+                                            </button>
+
+                                            <% if (submission.isManualReviewRequired() || submission.isMarked()) { %>
+                                                <a href="<%= request.getContextPath() %>/manual-marking?submissionId=<%= FileUtil.h(submission.getSubmissionId()) %>"
+                                                   class="btn btn-sm btn-warning">
+                                                    <i class="bi bi-pencil-square me-1"></i>
+                                                    Mark
+                                                </a>
+                                            <% } %>
+                                        </div>
                                     </td>
                                 </tr>
                             <% } %>
@@ -649,6 +659,14 @@
                 <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
                     Close
                 </button>
+
+                <% if (submission.isManualReviewRequired() || submission.isMarked()) { %>
+                    <a href="<%= request.getContextPath() %>/manual-marking?submissionId=<%= FileUtil.h(submission.getSubmissionId()) %>"
+                       class="btn btn-warning">
+                        <i class="bi bi-pencil-square me-2"></i>
+                        Mark Essay Answers
+                    </a>
+                <% } %>
 
                 <a href="<%= request.getContextPath() %>/results" class="btn btn-primary">
                     <i class="bi bi-bar-chart-fill me-2"></i>
