@@ -3,10 +3,10 @@ package lk.nextexam.model;
 import lk.nextexam.dao.FileUtil;
 
 /**
- * Notification model represents a system notification for a user or role.
+ * Notification model stores user/role-based notification records.
  *
  * Storage format:
- * notificationId|targetUserId|targetRole|title|message|type|status|createdAt
+ * notificationId|targetUserId|targetRole|title|message|type|status|createdAt|readAt|targetUrl
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
@@ -15,13 +15,15 @@ public class Notification {
 
     public static final String STATUS_UNREAD = "Unread";
     public static final String STATUS_READ = "Read";
+    public static final String STATUS_ARCHIVED = "Archived";
 
-    public static final String TYPE_RESULT = "RESULT";
-    public static final String TYPE_DOCUMENT = "DOCUMENT";
-    public static final String TYPE_NOTICE = "NOTICE";
-    public static final String TYPE_FEEDBACK = "FEEDBACK";
-    public static final String TYPE_EXAM = "EXAM";
-    public static final String TYPE_SYSTEM = "SYSTEM";
+    public static final String TYPE_RESULT = "Result";
+    public static final String TYPE_APPEAL = "Appeal";
+    public static final String TYPE_DOCUMENT = "Document";
+    public static final String TYPE_FEEDBACK = "Feedback";
+    public static final String TYPE_EXAM = "Exam";
+    public static final String TYPE_NOTICE = "Notice";
+    public static final String TYPE_SYSTEM = "System";
 
     private String notificationId;
     private String targetUserId;
@@ -31,6 +33,8 @@ public class Notification {
     private String type;
     private String status;
     private String createdAt;
+    private String readAt;
+    private String targetUrl;
 
     public Notification() {
     }
@@ -42,7 +46,9 @@ public class Notification {
                         String message,
                         String type,
                         String status,
-                        String createdAt) {
+                        String createdAt,
+                        String readAt,
+                        String targetUrl) {
         this.notificationId = notificationId;
         this.targetUserId = targetUserId;
         this.targetRole = targetRole;
@@ -51,6 +57,8 @@ public class Notification {
         this.type = type;
         this.status = status;
         this.createdAt = createdAt;
+        this.readAt = readAt;
+        this.targetUrl = targetUrl;
     }
 
     public String getNotificationId() {
@@ -117,6 +125,22 @@ public class Notification {
         this.createdAt = createdAt;
     }
 
+    public String getReadAt() {
+        return safe(readAt);
+    }
+
+    public void setReadAt(String readAt) {
+        this.readAt = readAt;
+    }
+
+    public String getTargetUrl() {
+        return safe(targetUrl);
+    }
+
+    public void setTargetUrl(String targetUrl) {
+        this.targetUrl = targetUrl;
+    }
+
     public boolean isUnread() {
         return STATUS_UNREAD.equalsIgnoreCase(getStatus());
     }
@@ -125,17 +149,40 @@ public class Notification {
         return STATUS_READ.equalsIgnoreCase(getStatus());
     }
 
+    public boolean isArchived() {
+        return STATUS_ARCHIVED.equalsIgnoreCase(getStatus());
+    }
+
+    public boolean isValidStatus() {
+        return isUnread() || isRead() || isArchived();
+    }
+
+    public boolean isTargetedToUser(String userId, String role) {
+        String cleanUserId = safe(userId);
+        String cleanRole = safe(role);
+
+        boolean userMatch = !getTargetUserId().isEmpty()
+                && getTargetUserId().equalsIgnoreCase(cleanUserId);
+
+        boolean roleMatch = !getTargetRole().isEmpty()
+                && getTargetRole().equalsIgnoreCase(cleanRole);
+
+        boolean allMatch = "All".equalsIgnoreCase(getTargetRole());
+
+        return userMatch || roleMatch || allMatch;
+    }
+
     public String getTypeIcon() {
         if (TYPE_RESULT.equalsIgnoreCase(getType())) {
             return "bi-bar-chart-fill";
         }
 
-        if (TYPE_DOCUMENT.equalsIgnoreCase(getType())) {
-            return "bi-folder-check";
+        if (TYPE_APPEAL.equalsIgnoreCase(getType())) {
+            return "bi-arrow-repeat";
         }
 
-        if (TYPE_NOTICE.equalsIgnoreCase(getType())) {
-            return "bi-megaphone-fill";
+        if (TYPE_DOCUMENT.equalsIgnoreCase(getType())) {
+            return "bi-folder-check";
         }
 
         if (TYPE_FEEDBACK.equalsIgnoreCase(getType())) {
@@ -146,27 +193,35 @@ public class Notification {
             return "bi-journal-check";
         }
 
-        return "bi-bell-fill";
+        if (TYPE_NOTICE.equalsIgnoreCase(getType())) {
+            return "bi-megaphone-fill";
+        }
+
+        return "bi-info-circle-fill";
     }
 
     public String getTypeBadgeClass() {
         if (TYPE_RESULT.equalsIgnoreCase(getType())) {
-            return "badge-soft-primary";
+            return "badge-soft-success";
+        }
+
+        if (TYPE_APPEAL.equalsIgnoreCase(getType())) {
+            return "badge-soft-warning";
         }
 
         if (TYPE_DOCUMENT.equalsIgnoreCase(getType())) {
             return "badge-soft-info";
         }
 
-        if (TYPE_NOTICE.equalsIgnoreCase(getType())) {
-            return "badge-soft-warning";
-        }
-
         if (TYPE_FEEDBACK.equalsIgnoreCase(getType())) {
-            return "badge-soft-success";
+            return "badge-soft-primary";
         }
 
         if (TYPE_EXAM.equalsIgnoreCase(getType())) {
+            return "badge-soft-danger";
+        }
+
+        if (TYPE_NOTICE.equalsIgnoreCase(getType())) {
             return "badge-soft-primary";
         }
 
@@ -174,7 +229,19 @@ public class Notification {
     }
 
     public String getStatusBadgeClass() {
-        return isUnread() ? "badge-soft-danger" : "badge-soft-secondary";
+        if (isUnread()) {
+            return "badge-soft-warning";
+        }
+
+        if (isRead()) {
+            return "badge-soft-success";
+        }
+
+        if (isArchived()) {
+            return "badge-soft-secondary";
+        }
+
+        return "badge-soft-secondary";
     }
 
     public boolean isCompleteForSave() {
@@ -182,8 +249,9 @@ public class Notification {
                 && !getTitle().isEmpty()
                 && !getMessage().isEmpty()
                 && !getType().isEmpty()
-                && !getStatus().isEmpty()
-                && !getCreatedAt().isEmpty();
+                && isValidStatus()
+                && !getCreatedAt().isEmpty()
+                && (!getTargetUserId().isEmpty() || !getTargetRole().isEmpty());
     }
 
     public String toFileString() {
@@ -194,7 +262,9 @@ public class Notification {
                 + FileUtil.clean(getMessage()) + "|"
                 + FileUtil.clean(getType()) + "|"
                 + FileUtil.clean(getStatus()) + "|"
-                + FileUtil.clean(getCreatedAt());
+                + FileUtil.clean(getCreatedAt()) + "|"
+                + FileUtil.clean(getReadAt()) + "|"
+                + FileUtil.clean(getTargetUrl());
     }
 
     public static Notification fromFileString(String line) {
@@ -204,7 +274,7 @@ public class Notification {
 
         String[] data = FileUtil.splitRecord(line);
 
-        if (data.length < 8) {
+        if (data.length < 10) {
             return null;
         }
 
@@ -216,44 +286,70 @@ public class Notification {
                 data[4],
                 data[5],
                 data[6],
-                data[7]
+                data[7],
+                data[8],
+                data[9]
         );
     }
 
     private String normalizeStatus(String value) {
-        String statusValue = safe(value);
+        String clean = safe(value);
 
-        if (STATUS_READ.equalsIgnoreCase(statusValue)) {
+        if (clean.isEmpty()) {
+            return STATUS_UNREAD;
+        }
+
+        if (STATUS_UNREAD.equalsIgnoreCase(clean)) {
+            return STATUS_UNREAD;
+        }
+
+        if (STATUS_READ.equalsIgnoreCase(clean)) {
             return STATUS_READ;
         }
 
-        return STATUS_UNREAD;
+        if (STATUS_ARCHIVED.equalsIgnoreCase(clean)) {
+            return STATUS_ARCHIVED;
+        }
+
+        return clean;
     }
 
     private String normalizeType(String value) {
-        String typeValue = safe(value).toUpperCase();
+        String clean = safe(value);
 
-        if (TYPE_RESULT.equalsIgnoreCase(typeValue)) {
+        if (clean.isEmpty()) {
+            return TYPE_SYSTEM;
+        }
+
+        if (TYPE_RESULT.equalsIgnoreCase(clean)) {
             return TYPE_RESULT;
         }
 
-        if (TYPE_DOCUMENT.equalsIgnoreCase(typeValue)) {
+        if (TYPE_APPEAL.equalsIgnoreCase(clean)) {
+            return TYPE_APPEAL;
+        }
+
+        if (TYPE_DOCUMENT.equalsIgnoreCase(clean)) {
             return TYPE_DOCUMENT;
         }
 
-        if (TYPE_NOTICE.equalsIgnoreCase(typeValue)) {
-            return TYPE_NOTICE;
-        }
-
-        if (TYPE_FEEDBACK.equalsIgnoreCase(typeValue)) {
+        if (TYPE_FEEDBACK.equalsIgnoreCase(clean)) {
             return TYPE_FEEDBACK;
         }
 
-        if (TYPE_EXAM.equalsIgnoreCase(typeValue)) {
+        if (TYPE_EXAM.equalsIgnoreCase(clean)) {
             return TYPE_EXAM;
         }
 
-        return TYPE_SYSTEM;
+        if (TYPE_NOTICE.equalsIgnoreCase(clean)) {
+            return TYPE_NOTICE;
+        }
+
+        if (TYPE_SYSTEM.equalsIgnoreCase(clean)) {
+            return TYPE_SYSTEM;
+        }
+
+        return clean;
     }
 
     private String safe(String value) {

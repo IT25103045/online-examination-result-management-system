@@ -14,7 +14,10 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
 /**
- * NotificationServlet controls the Notification Center.
+ * NotificationServlet controls the notification center workflow.
+ *
+ * URL:
+ * /notifications
  *
  * Supported actions:
  * - markRead
@@ -27,14 +30,24 @@ import java.nio.charset.StandardCharsets;
 @WebServlet("/notifications")
 public class NotificationServlet extends HttpServlet {
 
+    private static final String ACTION_MARK_READ = "markRead";
+    private static final String ACTION_MARK_ALL_READ = "markAllRead";
+    private static final String ACTION_DELETE = "delete";
+
     private final NotificationDAO notificationDAO = new NotificationDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+        prepareRequestResponse(request, response);
+
+        HttpSession session = request.getSession(false);
+
+        if (!isAuthenticated(session)) {
+            response.sendRedirect(request.getContextPath() + "/login.jsp?error=sessionExpired");
+            return;
+        }
 
         request.getRequestDispatcher("/notifications/index.jsp").forward(request, response);
     }
@@ -43,8 +56,7 @@ public class NotificationServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws IOException {
 
-        request.setCharacterEncoding("UTF-8");
-        response.setCharacterEncoding("UTF-8");
+        prepareRequestResponse(request, response);
 
         HttpSession session = request.getSession(false);
 
@@ -54,74 +66,46 @@ public class NotificationServlet extends HttpServlet {
         }
 
         String action = FileUtil.clean(request.getParameter("action"));
-
-        if ("markRead".equalsIgnoreCase(action)) {
-            markRead(request, response);
-            return;
-        }
-
-        if ("markAllRead".equalsIgnoreCase(action)) {
-            markAllRead(request, response, session);
-            return;
-        }
-
-        if ("delete".equalsIgnoreCase(action)) {
-            deleteNotification(request, response);
-            return;
-        }
-
-        redirect(request, response, "error", "invalidAction");
-    }
-
-    private void markRead(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-
-        String notificationId = FileUtil.clean(request.getParameter("notificationId"));
-
-        if (notificationId.isEmpty()) {
-            redirect(request, response, "error", "missingNotificationId");
-            return;
-        }
-
-        boolean success = notificationDAO.markAsRead(getServletContext(), notificationId);
-
-        redirect(request, response, success ? "success" : "error", success ? "markedRead" : "markReadFailed");
-    }
-
-    private void markAllRead(HttpServletRequest request,
-                             HttpServletResponse response,
-                             HttpSession session)
-            throws IOException {
-
         String userId = getSessionValue(session, "userId");
-        String userRole = getSessionValue(session, "userRole");
+        String role = getSessionValue(session, "userRole");
 
-        boolean success = notificationDAO.markAllAsRead(getServletContext(), userId, userRole);
-
-        redirect(request, response, success ? "success" : "error", success ? "allMarkedRead" : "markAllFailed");
-    }
-
-    private void deleteNotification(HttpServletRequest request, HttpServletResponse response)
-            throws IOException {
-
-        String notificationId = FileUtil.clean(request.getParameter("notificationId"));
-
-        if (notificationId.isEmpty()) {
-            redirect(request, response, "error", "missingNotificationId");
+        if (ACTION_MARK_READ.equalsIgnoreCase(action)) {
+            String notificationId = FileUtil.clean(request.getParameter("notificationId"));
+            boolean updated = notificationDAO.markAsRead(getServletContext(), notificationId);
+            redirectToNotifications(request, response, updated ? "success" : "error", updated ? "markedRead" : "markReadFailed");
             return;
         }
 
-        boolean success = notificationDAO.deleteNotification(getServletContext(), notificationId);
+        if (ACTION_MARK_ALL_READ.equalsIgnoreCase(action)) {
+            notificationDAO.markAllAsReadForUser(getServletContext(), userId, role);
+            redirectToNotifications(request, response, "success", "allMarkedRead");
+            return;
+        }
 
-        redirect(request, response, success ? "success" : "error", success ? "deleted" : "deleteFailed");
+        if (ACTION_DELETE.equalsIgnoreCase(action)) {
+            String notificationId = FileUtil.clean(request.getParameter("notificationId"));
+            boolean deleted = notificationDAO.deleteNotification(getServletContext(), notificationId);
+            redirectToNotifications(request, response, deleted ? "success" : "error", deleted ? "deleted" : "deleteFailed");
+            return;
+        }
+
+        redirectToNotifications(request, response, "error", "invalidAction");
     }
 
     private boolean isAuthenticated(HttpSession session) {
-        return session != null
-                && session.getAttribute("loggedUser") != null
-                && session.getAttribute("userId") != null
-                && session.getAttribute("userRole") != null
-                && "authenticated".equals(String.valueOf(session.getAttribute("loginStatus")));
+        if (session == null) {
+            return false;
+        }
+
+        Object loggedUser = session.getAttribute("loggedUser");
+        Object loginStatus = session.getAttribute("loginStatus");
+        Object userRole = session.getAttribute("userRole");
+        Object userId = session.getAttribute("userId");
+
+        return loggedUser != null
+                && userId != null
+                && userRole != null
+                && "authenticated".equals(String.valueOf(loginStatus));
     }
 
     private String getSessionValue(HttpSession session, String key) {
@@ -133,16 +117,32 @@ public class NotificationServlet extends HttpServlet {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
-    private void redirect(HttpServletRequest request,
-                          HttpServletResponse response,
-                          String key,
-                          String value)
+    private void redirectToNotifications(HttpServletRequest request,
+                                         HttpServletResponse response,
+                                         String type,
+                                         String code)
             throws IOException {
 
         response.sendRedirect(request.getContextPath()
                 + "/notifications?"
-                + key
+                + urlEncode(type)
                 + "="
-                + URLEncoder.encode(value, StandardCharsets.UTF_8));
+                + urlEncode(code));
+    }
+
+    private String urlEncode(String value) {
+        return URLEncoder.encode(value == null ? "" : value, StandardCharsets.UTF_8);
+    }
+
+    private void prepareRequestResponse(HttpServletRequest request,
+                                        HttpServletResponse response)
+            throws IOException {
+
+        request.setCharacterEncoding("UTF-8");
+        response.setCharacterEncoding("UTF-8");
+
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
     }
 }
