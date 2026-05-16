@@ -4112,210 +4112,376 @@ strong {
         display: none;
     }
 }
+
 /* ================================
-   Exam Rules Agreement Workflow
+   Submission Review Dashboard
+   Conflict-safe final version
 ================================ */
-.exam-rules-hero {
-    padding: 30px;
-    border-radius: var(--radius-2xl);
-    background:
-        radial-gradient(circle at top right, rgba(220, 38, 38, 0.11), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.10), transparent 30%),
-        linear-gradient(135deg, #ffffff, #f8fafc);
-    border: 1px solid rgba(226, 232, 240, 0.94);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 24px;
-    overflow: hidden;
+.submission-table {
+    min-width: 1050px;
 }
 
-.exam-rules-hero-content {
-    min-width: 0;
-}
-
-.exam-rules-hero h1 {
-    font-size: clamp(26px, 3vw, 38px);
-    font-weight: 950;
-    letter-spacing: -0.05em;
-    color: var(--dark);
-    margin-bottom: 10px;
-}
-
-.exam-rules-hero p {
-    max-width: 780px;
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 1.7;
-    margin-bottom: 0;
-}
-
-.exam-rules-hero-icon {
-    width: 94px;
-    height: 94px;
-    min-width: 94px;
-    border-radius: 32px;
-    background: linear-gradient(135deg, var(--danger), var(--primary-light));
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
-    box-shadow: 0 18px 42px rgba(220, 38, 38, 0.22);
-}
-
-.exam-rules-agreement-list {
+.submission-review-stack {
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
 }
 
-.exam-rules-agreement-item {
+.submission-review-item {
+    min-width: 0;
     padding: 16px;
     border-radius: 22px;
-    background: #ffffff;
     border: 1px solid var(--border);
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    box-shadow: var(--shadow-xs);
-    transition: all 0.18s ease;
-}
-
-.exam-rules-agreement-item:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-}
-
-.exam-rules-agreement-item i {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 17px;
+    background: #ffffff;
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-size: 19px;
+    justify-content: space-between;
+    gap: 14px;
+    box-shadow: var(--shadow-xs);
 }
 
-.exam-rules-agreement-item strong {
+.submission-review-item div,
+.submission-review-item span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.submission-review-item small {
     display: block;
-    color: var(--dark);
-    font-size: 15px;
+    font-size: 11px;
     font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: var(--muted);
     margin-bottom: 4px;
 }
 
-.exam-rules-agreement-item p {
+.submission-review-item strong {
+    font-size: 30px;
+    font-weight: 950;
+    line-height: 1;
+}
+
+.submission-review-item span {
     color: var(--muted);
-    font-size: 13px;
-    font-weight: 750;
-    line-height: 1.55;
-    margin-bottom: 0;
+    font-size: 12px;
+    font-weight: 800;
+    text-align: right;
 }
 
-.exam-rules-agreement-item.danger {
-    border-color: #fecaca;
+.submission-review-item.warning {
     background:
-        radial-gradient(circle at top right, rgba(220, 38, 38, 0.08), transparent 34%),
+        radial-gradient(circle at top right, rgba(245, 158, 11, 0.12), transparent 36%),
         #ffffff;
-}
-
-.exam-rules-agreement-item.danger i {
-    background: var(--danger-soft);
-    color: var(--danger);
-}
-
-.exam-rules-agreement-item.warning {
     border-color: #fde68a;
-    background:
-        radial-gradient(circle at top right, rgba(245, 158, 11, 0.10), transparent 34%),
-        #ffffff;
 }
 
-.exam-rules-agreement-item.warning i {
-    background: var(--warning-soft);
+.submission-review-item.warning strong {
     color: var(--warning);
 }
 
-.exam-rules-agreement-item.info {
-    border-color: #bae6fd;
+.submission-review-item.primary {
     background:
-        radial-gradient(circle at top right, rgba(2, 132, 199, 0.08), transparent 34%),
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.10), transparent 36%),
         #ffffff;
+    border-color: #bfdbfe;
 }
 
-.exam-rules-agreement-item.info i {
-    background: var(--info-soft);
-    color: var(--info);
+.submission-review-item.primary strong {
+    color: var(--primary-light);
 }
 
-.exam-rules-agreement-item.success {
+.submission-review-item.success {
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.10), transparent 36%),
+        #ffffff;
     border-color: #bbf7d0;
-    background:
-        radial-gradient(circle at top right, rgba(22, 163, 74, 0.08), transparent 34%),
-        #ffffff;
 }
 
-.exam-rules-agreement-item.success i {
-    background: var(--success-soft);
+.submission-review-item.success strong {
     color: var(--success);
 }
 
-.exam-rules-confirm-box {
+.submission-answer-card {
+    max-width: 100%;
     padding: 18px;
-    border-radius: 22px;
-    background:
-        linear-gradient(135deg, rgba(219, 234, 254, 0.72), rgba(240, 249, 255, 0.96)),
-        #ffffff;
-    border: 1px solid #bfdbfe;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    cursor: pointer;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    box-shadow: var(--shadow-xs);
+    margin-bottom: 16px;
+    overflow-wrap: anywhere;
 }
 
-.exam-rules-confirm-box input {
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
+.submission-answer-head {
+    min-width: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.submission-answer-head > div {
+    min-width: 0;
+}
+
+.submission-answer-mark {
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--dark);
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.submission-question-text {
+    color: var(--dark);
+    font-size: 15px;
+    line-height: 1.65;
+    margin-bottom: 10px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.submission-answer-box {
+    max-width: 100%;
+    min-height: 96px;
+    padding: 15px;
+    border-radius: 20px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.submission-answer-box small {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 6px;
+}
+
+.submission-answer-box strong {
+    color: var(--dark);
+    font-size: 14px;
+    line-height: 1.55;
+}
+
+.submission-answer-box p {
+    color: var(--dark);
+    font-size: 14px;
+    font-weight: 750;
+    line-height: 1.7;
+    margin-bottom: 0;
+    white-space: pre-wrap;
+}
+
+.submission-answer-box.correct {
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.10), transparent 34%),
+        #ffffff;
+    border-color: #bbf7d0;
+}
+
+.submission-answer-box.correct small {
+    color: var(--success);
+}
+
+.submission-answer-box.wrong {
+    background:
+        radial-gradient(circle at top right, rgba(220, 38, 38, 0.08), transparent 34%),
+        #ffffff;
+    border-color: #fecaca;
+}
+
+.submission-answer-box.wrong small {
+    color: var(--danger);
+}
+
+.submission-answer-box.essay {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34%),
+        #ffffff;
+    border-color: #bfdbfe;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+.submission-answer-box.model {
+    background:
+        radial-gradient(circle at top right, rgba(2, 132, 199, 0.08), transparent 34%),
+        #ffffff;
+    border-color: #bae6fd;
+    max-height: 260px;
+    overflow-y: auto;
+}
+
+/* Submission Review UI Jam Fix */
+.app-shell,
+.main-content,
+.page-wrapper,
+.app-card,
+.crud-card,
+.hero-card {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.submission-table,
+.submission-table th,
+.submission-table td {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.table-responsive {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.submission-table td:nth-child(2),
+.submission-table td:nth-child(3),
+.submission-table td:nth-child(7) {
+    max-width: 180px;
+}
+
+.submission-table td:nth-child(4) {
+    max-width: 170px;
+}
+
+.submission-table td:nth-child(8) {
+    max-width: 120px;
+}
+
+.crud-toolbar {
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+
+.crud-toolbar > div {
+    min-width: 0;
+}
+
+.crud-toolbar .d-flex {
+    min-width: 0;
+    max-width: 100%;
+}
+
+#submissionSearch {
+    min-width: 0;
+}
+
+.modal-dialog.modal-xl {
+    max-width: min(96vw, 1180px);
+}
+
+.modal-content {
+    max-width: 100%;
+    overflow: hidden;
+}
+
+.modal-body {
+    overflow-x: hidden;
+}
+
+/* Sidebar Scroll Stability */
+.sidebar {
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+}
+
+.sidebar-menu {
+    padding-bottom: 24px;
+}
+
+.sidebar-note {
     flex-shrink: 0;
 }
 
-.exam-rules-confirm-box span {
-    color: var(--dark);
-    font-size: 14px;
-    font-weight: 850;
-    line-height: 1.6;
-}
+@media (max-width: 1199px) {
+    .submission-table {
+        min-width: 980px;
+    }
 
-#enterExamBtn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
+    .crud-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .crud-toolbar .d-flex,
+    .crud-toolbar .input-group,
+    .crud-toolbar .form-select {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
 }
 
 @media (max-width: 768px) {
-    .exam-rules-hero {
-        padding: 22px;
+    .submission-table {
+        min-width: 900px;
+    }
+
+    .submission-review-item {
+        flex-direction: column;
         align-items: flex-start;
     }
 
-    .exam-rules-hero-icon {
-        display: none;
+    .submission-review-item span {
+        text-align: left;
     }
 
-    .exam-rules-agreement-item {
+    .submission-answer-head {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .submission-answer-mark {
+        width: fit-content;
+    }
+
+    .modal-dialog.modal-xl {
+        margin: 10px;
+        max-width: calc(100vw - 20px);
+    }
+
+    .modal-body {
+        padding: 16px;
+    }
+
+    .submission-answer-card {
         padding: 14px;
+        border-radius: 20px;
     }
 
-    .exam-rules-agreement-item i {
-        width: 38px;
-        height: 38px;
-        min-width: 38px;
-        border-radius: 15px;
-        font-size: 17px;
+    .submission-answer-box {
+        min-height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .submission-table {
+        min-width: 820px;
+    }
+
+    .hero-card .btn,
+    .crud-toolbar .btn {
+        width: 100%;
+    }
+
+    .submission-answer-box.essay,
+    .submission-answer-box.model {
+        max-height: 220px;
     }
 }
