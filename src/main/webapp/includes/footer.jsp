@@ -5,5 +5,8 @@
 <!-- Main Application JavaScript -->
 <script src="<%= request.getContextPath() %>/js/app.js?v=professional-final-2"></script>
 
+<!-- Reusable Advanced Search and Filtering -->
+<script src="<%= request.getContextPath() %>/js/table-filters.js?v=advanced-filtering-1"></script>
+
 </body>
 </html>
