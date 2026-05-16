@@ -1,0 +1,5 @@
+NT001|STU001|Student|Result Published|Your result for EX001 has been published.|Result|Unread|2026-05-16 10:00:00||/my-results
+NT002||Admin|New Result Appeal|A student has submitted a new result recheck request.|Appeal|Unread|2026-05-16 10:10:00||/result-appeals
+NT003||Lecturer|Essay Marking Pending|A submission is waiting for manual essay marking.|Exam|Unread|2026-05-16 10:20:00||/submissions
+NT004|STU001|Student|Document Approved|Your uploaded document has been approved by admin.|Document|Unread|2026-05-16 10:30:00||/documents
+NT005||All|Welcome to NextExamLK|Your notification center is now active.|System|Unread|2026-05-16 10:40:00||/notifications
