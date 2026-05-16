@@ -4112,218 +4112,13 @@ strong {
         display: none;
     }
 }
-/* ================================
-   Exam Rules Agreement Workflow
-================================ */
-.exam-rules-hero {
-    padding: 30px;
-    border-radius: var(--radius-2xl);
-    background:
-        radial-gradient(circle at top right, rgba(220, 38, 38, 0.11), transparent 32%),
-        radial-gradient(circle at bottom left, rgba(37, 99, 235, 0.10), transparent 30%),
-        linear-gradient(135deg, #ffffff, #f8fafc);
-    border: 1px solid rgba(226, 232, 240, 0.94);
-    box-shadow: var(--shadow-sm);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 24px;
-    overflow: hidden;
-}
 
-.exam-rules-hero-content {
-    min-width: 0;
-}
-
-.exam-rules-hero h1 {
-    font-size: clamp(26px, 3vw, 38px);
-    font-weight: 950;
-    letter-spacing: -0.05em;
-    color: var(--dark);
-    margin-bottom: 10px;
-}
-
-.exam-rules-hero p {
-    max-width: 780px;
-    color: var(--muted);
-    font-size: 15px;
-    line-height: 1.7;
-    margin-bottom: 0;
-}
-
-.exam-rules-hero-icon {
-    width: 94px;
-    height: 94px;
-    min-width: 94px;
-    border-radius: 32px;
-    background: linear-gradient(135deg, var(--danger), var(--primary-light));
-    color: #ffffff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 42px;
-    box-shadow: 0 18px 42px rgba(220, 38, 38, 0.22);
-}
-
-.exam-rules-agreement-list {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.exam-rules-agreement-item {
-    padding: 16px;
-    border-radius: 22px;
-    background: #ffffff;
-    border: 1px solid var(--border);
-    display: flex;
-    align-items: flex-start;
-    gap: 14px;
-    box-shadow: var(--shadow-xs);
-    transition: all 0.18s ease;
-}
-
-.exam-rules-agreement-item:hover {
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-sm);
-}
-
-.exam-rules-agreement-item i {
-    width: 44px;
-    height: 44px;
-    min-width: 44px;
-    border-radius: 17px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 19px;
-}
-
-.exam-rules-agreement-item strong {
-    display: block;
-    color: var(--dark);
-    font-size: 15px;
-    font-weight: 950;
-    margin-bottom: 4px;
-}
-
-.exam-rules-agreement-item p {
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 750;
-    line-height: 1.55;
-    margin-bottom: 0;
-}
-
-.exam-rules-agreement-item.danger {
-    border-color: #fecaca;
-    background:
-        radial-gradient(circle at top right, rgba(220, 38, 38, 0.08), transparent 34%),
-        #ffffff;
-}
-
-.exam-rules-agreement-item.danger i {
-    background: var(--danger-soft);
-    color: var(--danger);
-}
-
-.exam-rules-agreement-item.warning {
-    border-color: #fde68a;
-    background:
-        radial-gradient(circle at top right, rgba(245, 158, 11, 0.10), transparent 34%),
-        #ffffff;
-}
-
-.exam-rules-agreement-item.warning i {
-    background: var(--warning-soft);
-    color: var(--warning);
-}
-
-.exam-rules-agreement-item.info {
-    border-color: #bae6fd;
-    background:
-        radial-gradient(circle at top right, rgba(2, 132, 199, 0.08), transparent 34%),
-        #ffffff;
-}
-
-.exam-rules-agreement-item.info i {
-    background: var(--info-soft);
-    color: var(--info);
-}
-
-.exam-rules-agreement-item.success {
-    border-color: #bbf7d0;
-    background:
-        radial-gradient(circle at top right, rgba(22, 163, 74, 0.08), transparent 34%),
-        #ffffff;
-}
-
-.exam-rules-agreement-item.success i {
-    background: var(--success-soft);
-    color: var(--success);
-}
-
-.exam-rules-confirm-box {
-    padding: 18px;
-    border-radius: 22px;
-    background:
-        linear-gradient(135deg, rgba(219, 234, 254, 0.72), rgba(240, 249, 255, 0.96)),
-        #ffffff;
-    border: 1px solid #bfdbfe;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    cursor: pointer;
-}
-
-.exam-rules-confirm-box input {
-    width: 20px;
-    height: 20px;
-    margin-top: 2px;
-    flex-shrink: 0;
-}
-
-.exam-rules-confirm-box span {
-    color: var(--dark);
-    font-size: 14px;
-    font-weight: 850;
-    line-height: 1.6;
-}
-
-#enterExamBtn:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none;
-    box-shadow: none;
-}
-
-@media (max-width: 768px) {
-    .exam-rules-hero {
-        padding: 22px;
-        align-items: flex-start;
-    }
-
-    .exam-rules-hero-icon {
-        display: none;
-    }
-
-    .exam-rules-agreement-item {
-        padding: 14px;
-    }
-
-    .exam-rules-agreement-item i {
-        width: 38px;
-        height: 38px;
-        min-width: 38px;
-        border-radius: 15px;
-        font-size: 17px;
-    }
-}
 /* ================================
    Submission Review Dashboard
+   Conflict-safe final version
 ================================ */
 .submission-table {
-    min-width: 1120px;
+    min-width: 1050px;
 }
 
 .submission-review-stack {
@@ -4333,6 +4128,7 @@ strong {
 }
 
 .submission-review-item {
+    min-width: 0;
     padding: 16px;
     border-radius: 22px;
     border: 1px solid var(--border);
@@ -4342,6 +4138,12 @@ strong {
     justify-content: space-between;
     gap: 14px;
     box-shadow: var(--shadow-xs);
+}
+
+.submission-review-item div,
+.submission-review-item span {
+    min-width: 0;
+    overflow-wrap: anywhere;
 }
 
 .submission-review-item small {
@@ -4401,15 +4203,18 @@ strong {
 }
 
 .submission-answer-card {
+    max-width: 100%;
     padding: 18px;
     border-radius: 24px;
     border: 1px solid var(--border);
     background: #ffffff;
     box-shadow: var(--shadow-xs);
     margin-bottom: 16px;
+    overflow-wrap: anywhere;
 }
 
 .submission-answer-head {
+    min-width: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -4418,6 +4223,10 @@ strong {
     padding-bottom: 12px;
     margin-bottom: 14px;
     border-bottom: 1px solid var(--border);
+}
+
+.submission-answer-head > div {
+    min-width: 0;
 }
 
 .submission-answer-mark {
@@ -4435,14 +4244,19 @@ strong {
     font-size: 15px;
     line-height: 1.65;
     margin-bottom: 10px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .submission-answer-box {
+    max-width: 100%;
     min-height: 96px;
     padding: 15px;
     border-radius: 20px;
     background: #f8fafc;
     border: 1px solid var(--border);
+    overflow-wrap: anywhere;
+    word-break: break-word;
 }
 
 .submission-answer-box small {
@@ -4497,6 +4311,8 @@ strong {
         radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34%),
         #ffffff;
     border-color: #bfdbfe;
+    max-height: 260px;
+    overflow-y: auto;
 }
 
 .submission-answer-box.model {
@@ -4504,32 +4320,11 @@ strong {
         radial-gradient(circle at top right, rgba(2, 132, 199, 0.08), transparent 34%),
         #ffffff;
     border-color: #bae6fd;
+    max-height: 260px;
+    overflow-y: auto;
 }
 
-@media (max-width: 768px) {
-    .submission-table {
-        min-width: 980px;
-    }
-
-    .submission-review-item {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .submission-review-item span {
-        text-align: left;
-    }
-
-    .submission-answer-head {
-        align-items: flex-start;
-    }
-}
-/* ================================
-   Submission Review UI Jam Fix
-   Prevents table/modal/topbar overflow
-================================ */
-
-/* Main layout safety */
+/* Submission Review UI Jam Fix */
 .app-shell,
 .main-content,
 .page-wrapper,
@@ -4540,20 +4335,11 @@ strong {
     max-width: 100%;
 }
 
-/* Prevent long text from breaking layout */
 .submission-table,
 .submission-table th,
-.submission-table td,
-.submission-answer-card,
-.submission-answer-box,
-.submission-question-text {
+.submission-table td {
     overflow-wrap: anywhere;
     word-break: break-word;
-}
-
-/* Keep submission table scrollable instead of squeezing page */
-.submission-table {
-    min-width: 1050px;
 }
 
 .table-responsive {
@@ -4562,7 +4348,6 @@ strong {
     -webkit-overflow-scrolling: touch;
 }
 
-/* Prevent table cells becoming too wide */
 .submission-table td:nth-child(2),
 .submission-table td:nth-child(3),
 .submission-table td:nth-child(7) {
@@ -4577,7 +4362,6 @@ strong {
     max-width: 120px;
 }
 
-/* Better toolbar wrapping */
 .crud-toolbar {
     align-items: flex-start;
     flex-wrap: wrap;
@@ -4596,7 +4380,6 @@ strong {
     min-width: 0;
 }
 
-/* Modal overflow protection */
 .modal-dialog.modal-xl {
     max-width: min(96vw, 1180px);
 }
@@ -4610,56 +4393,23 @@ strong {
     overflow-x: hidden;
 }
 
-.submission-answer-card {
-    max-width: 100%;
-}
-
-.submission-answer-head {
-    min-width: 0;
-}
-
-.submission-answer-head > div {
-    min-width: 0;
-}
-
-.submission-answer-box {
-    max-width: 100%;
-}
-
-/* Essay/model answers should scroll vertically, not stretch page */
-.submission-answer-box.essay,
-.submission-answer-box.model {
-    max-height: 260px;
+/* Sidebar Scroll Stability */
+.sidebar {
+    height: 100vh;
+    max-height: 100vh;
     overflow-y: auto;
+    overflow-x: hidden;
+    scroll-behavior: smooth;
 }
 
-/* KPI review cards should wrap nicely */
-.submission-review-item {
-    min-width: 0;
+.sidebar-menu {
+    padding-bottom: 24px;
 }
 
-.submission-review-item div,
-.submission-review-item span {
-    min-width: 0;
-    overflow-wrap: anywhere;
-}
-
-/* Topbar safety after adding many pages */
-.topbar {
-    min-width: 0;
-}
-
-.topbar-left,
-.topbar-title-wrap {
-    min-width: 0;
-}
-
-.topbar-actions {
-    min-width: 0;
+.sidebar-note {
     flex-shrink: 0;
 }
 
-/* Medium screens */
 @media (max-width: 1199px) {
     .submission-table {
         min-width: 980px;
@@ -4678,7 +4428,6 @@ strong {
     }
 }
 
-/* Tablet and mobile */
 @media (max-width: 768px) {
     .submission-table {
         min-width: 900px;
@@ -4721,7 +4470,6 @@ strong {
     }
 }
 
-/* Very small screens */
 @media (max-width: 480px) {
     .submission-table {
         min-width: 820px;
