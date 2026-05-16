@@ -2,6 +2,11 @@
     Staff Submission Review Dashboard.
     Allows Admin/Lecturer users to review submitted exam attempts and answers.
 
+    Enhancement:
+    Result Publishing Workflow
+    - Auto Marked / Marked submissions can be published.
+    - Published results become visible to students.
+
     Responsible Member:
     IT25103045 - De Silva H.L.D.C.P.C
 --%>
@@ -91,6 +96,10 @@
             return "badge-soft-secondary";
         }
 
+        if (submission.isPublished()) {
+            return "badge-soft-success";
+        }
+
         if (submission.isManualReviewRequired()) {
             return "badge-soft-warning";
         }
@@ -99,7 +108,7 @@
             return "badge-soft-primary";
         }
 
-        if (submission.isMarked() || submission.isPublished()) {
+        if (submission.isMarked()) {
             return "badge-soft-success";
         }
 
@@ -160,6 +169,39 @@
     String averageDisplay = averagePercentage == Math.floor(averagePercentage)
             ? String.valueOf((int) averagePercentage)
             : String.format("%.1f", averagePercentage);
+
+    String success = request.getParameter("success");
+    String error = request.getParameter("error");
+    String info = request.getParameter("info");
+
+    String publishAlertType = "";
+    String publishAlertMessage = "";
+
+    if ("resultPublished".equalsIgnoreCase(success)) {
+        publishAlertType = "success";
+        publishAlertMessage = "Result was published successfully. The student can now view it in My Results.";
+    } else if ("alreadyPublished".equalsIgnoreCase(info)) {
+        publishAlertType = "info";
+        publishAlertMessage = "This result is already published.";
+    } else if ("manualReviewPending".equalsIgnoreCase(error)) {
+        publishAlertType = "warning";
+        publishAlertMessage = "This submission cannot be published because manual review is still pending.";
+    } else if ("notEligibleForPublish".equalsIgnoreCase(error)) {
+        publishAlertType = "danger";
+        publishAlertMessage = "Only Auto Marked or Marked submissions can be published.";
+    } else if ("cancelledSubmission".equalsIgnoreCase(error)) {
+        publishAlertType = "danger";
+        publishAlertMessage = "Cancelled submissions cannot be published.";
+    } else if ("publishFailed".equalsIgnoreCase(error)) {
+        publishAlertType = "danger";
+        publishAlertMessage = "Result publishing failed. Please try again.";
+    } else if ("submissionNotFound".equalsIgnoreCase(error)) {
+        publishAlertType = "danger";
+        publishAlertMessage = "The selected submission could not be found.";
+    } else if ("missingSubmissionId".equalsIgnoreCase(error)) {
+        publishAlertType = "danger";
+        publishAlertMessage = "Submission ID is missing.";
+    }
 %>
 
 <%@ include file="../includes/head.jsp" %>
@@ -184,7 +226,7 @@
 
                         <p class="hero-text">
                             Review student exam attempts, inspect MCQ and essay answers, identify manual review submissions,
-                            and support the result processing workflow.
+                            publish completed results, and support the result processing workflow.
                         </p>
                     </div>
 
@@ -201,6 +243,13 @@
                     </div>
                 </div>
             </div>
+
+            <% if (!publishAlertMessage.isEmpty()) { %>
+                <div class="alert alert-<%= FileUtil.h(publishAlertType) %>">
+                    <i class="bi <%= "success".equals(publishAlertType) ? "bi-check-circle-fill" : "bi-info-circle-fill" %> me-1"></i>
+                    <%= FileUtil.h(publishAlertMessage) %>
+                </div>
+            <% } %>
 
             <div class="row g-3 mb-4">
                 <div class="col-md-6 col-xl-3">
@@ -241,7 +290,7 @@
                             <div>
                                 <div class="stat-label">Auto Marked</div>
                                 <div class="stat-value"><%= autoMarkedCount %></div>
-                                <div class="stat-meta">MCQ-only auto scored</div>
+                                <div class="stat-meta">Ready to publish</div>
                             </div>
 
                             <div class="stat-icon">
@@ -298,7 +347,7 @@
                                     <small>Auto Marked</small>
                                     <strong><%= autoMarkedCount %></strong>
                                 </div>
-                                <span>Ready for result processing</span>
+                                <span>Can be published after verification</span>
                             </div>
 
                             <div class="submission-review-item success">
@@ -306,7 +355,7 @@
                                     <small>Published</small>
                                     <strong><%= publishedCount %></strong>
                                 </div>
-                                <span>Visible or final workflow stage</span>
+                                <span>Visible to students</span>
                             </div>
                         </div>
                     </div>
@@ -316,50 +365,50 @@
                     <div class="app-card p-4 h-100">
                         <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
                             <div>
-                                <h4 class="fw-bold mb-1">Submission Review Guidelines</h4>
+                                <h4 class="fw-bold mb-1">Publishing Guidelines</h4>
                                 <p class="text-secondary mb-0">
-                                    Use this dashboard to review answers before creating or publishing final results.
+                                    Publish results only after marks are verified.
                                 </p>
                             </div>
 
                             <span class="badge badge-soft-primary">
-                                Lecturer Workflow
+                                Result Workflow
                             </span>
                         </div>
 
                         <div class="row g-3">
                             <div class="col-md-6">
                                 <div class="exam-info-box">
-                                    <small>MCQ Answers</small>
-                                    <strong>Selected answer and correct answer can be compared.</strong>
+                                    <small>Auto Marked</small>
+                                    <strong>MCQ-only submissions can be published after verification.</strong>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="exam-info-box">
-                                    <small>Essay Answers</small>
-                                    <strong>Lecturer can read submitted text and compare with model answer.</strong>
+                                    <small>Manual Review Required</small>
+                                    <strong>Must be marked before publishing.</strong>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="exam-info-box">
-                                    <small>Manual Review</small>
-                                    <strong>Essay or mixed exams are marked as review required.</strong>
+                                    <small>Marked</small>
+                                    <strong>Essay marking completed and eligible for publishing.</strong>
                                 </div>
                             </div>
 
                             <div class="col-md-6">
                                 <div class="exam-info-box">
-                                    <small>Next Step</small>
-                                    <strong>Create/update final result after marking review is complete.</strong>
+                                    <small>Published</small>
+                                    <strong>Student can view result and download PDF.</strong>
                                 </div>
                             </div>
                         </div>
 
                         <div class="alert alert-info mt-4 mb-0">
                             <strong>Note:</strong>
-                            This page reviews submitted attempts. Manual essay mark entry can be added in the next enhancement pack.
+                            The system prevents publishing submissions that are still pending manual review.
                         </div>
                     </div>
                 </div>
@@ -370,7 +419,7 @@
                     <div>
                         <h4 class="fw-bold mb-1">Submission Records</h4>
                         <p class="text-secondary mb-0">
-                            Search, filter, and open submitted exam attempts.
+                            Search, filter, review, mark, and publish submitted exam attempts.
                         </p>
                     </div>
 
@@ -425,10 +474,12 @@
 
                             <tbody>
                             <% for (ExamSubmission submission : submissions) {
-                                String modalId = "submissionModal_" + FileUtil.h(submission.getSubmissionId());
+                                String safeSubmissionId = FileUtil.h(submission.getSubmissionId());
+                                String modalId = "submissionModal_" + safeSubmissionId;
+                                String publishModalId = "publishModal_" + safeSubmissionId;
                             %>
                                 <tr data-status="<%= FileUtil.h(submission.getStatus().toLowerCase()) %>">
-                                    <td class="fw-bold"><%= FileUtil.h(submission.getSubmissionId()) %></td>
+                                    <td class="fw-bold"><%= safeSubmissionId %></td>
 
                                     <td>
                                         <strong><%= FileUtil.h(submission.getStudentName()) %></strong><br>
@@ -478,11 +529,26 @@
                                             </button>
 
                                             <% if (submission.isManualReviewRequired() || submission.isMarked()) { %>
-                                                <a href="<%= request.getContextPath() %>/manual-marking?submissionId=<%= FileUtil.h(submission.getSubmissionId()) %>"
+                                                <a href="<%= request.getContextPath() %>/manual-marking?submissionId=<%= safeSubmissionId %>"
                                                    class="btn btn-sm btn-warning">
                                                     <i class="bi bi-pencil-square me-1"></i>
                                                     Mark
                                                 </a>
+                                            <% } %>
+
+                                            <% if (submission.canBePublished()) { %>
+                                                <button type="button"
+                                                        class="btn btn-sm btn-success"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#<%= publishModalId %>">
+                                                    <i class="bi bi-send-check-fill me-1"></i>
+                                                    Publish
+                                                </button>
+                                            <% } else if (submission.isPublished()) { %>
+                                                <span class="badge badge-soft-success">
+                                                    <i class="bi bi-check-circle-fill me-1"></i>
+                                                    Published
+                                                </span>
                                             <% } %>
                                         </div>
                                     </td>
@@ -500,7 +566,9 @@
 
 <% if (submissions != null && !submissions.isEmpty()) {
     for (ExamSubmission submission : submissions) {
-        String modalId = "submissionModal_" + FileUtil.h(submission.getSubmissionId());
+        String safeSubmissionId = FileUtil.h(submission.getSubmissionId());
+        String modalId = "submissionModal_" + safeSubmissionId;
+        String publishModalId = "publishModal_" + safeSubmissionId;
         List<Question> questions = questionDAO.getStudentVisibleQuestionsByExamId(application, submission.getExamId());
         Exam exam = examDAO.getExamById(application, submission.getExamId());
 %>
@@ -512,7 +580,7 @@
             <div class="modal-header">
                 <div>
                     <h5 class="modal-title fw-bold">
-                        Submission Review — <%= FileUtil.h(submission.getSubmissionId()) %>
+                        Submission Review — <%= safeSubmissionId %>
                     </h5>
 
                     <small class="text-secondary">
@@ -661,11 +729,21 @@
                 </button>
 
                 <% if (submission.isManualReviewRequired() || submission.isMarked()) { %>
-                    <a href="<%= request.getContextPath() %>/manual-marking?submissionId=<%= FileUtil.h(submission.getSubmissionId()) %>"
+                    <a href="<%= request.getContextPath() %>/manual-marking?submissionId=<%= safeSubmissionId %>"
                        class="btn btn-warning">
                         <i class="bi bi-pencil-square me-2"></i>
                         Mark Essay Answers
                     </a>
+                <% } %>
+
+                <% if (submission.canBePublished()) { %>
+                    <button type="button"
+                            class="btn btn-success"
+                            data-bs-toggle="modal"
+                            data-bs-target="#<%= publishModalId %>">
+                        <i class="bi bi-send-check-fill me-2"></i>
+                        Publish Result
+                    </button>
                 <% } %>
 
                 <a href="<%= request.getContextPath() %>/results" class="btn btn-primary">
@@ -677,6 +755,97 @@
         </div>
     </div>
 </div>
+
+<% if (submission.canBePublished()) { %>
+<div class="modal fade" id="<%= publishModalId %>" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+
+            <div class="modal-header">
+                <div>
+                    <h5 class="modal-title fw-bold">Publish Result?</h5>
+                    <small class="text-secondary">
+                        Submission <%= safeSubmissionId %>
+                    </small>
+                </div>
+
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="publish-confirm-card">
+                    <div class="publish-confirm-icon">
+                        <i class="bi bi-send-check-fill"></i>
+                    </div>
+
+                    <div>
+                        <h4>Confirm result publication</h4>
+                        <p>
+                            This result will become visible to the student in My Results.
+                            The student may also download the result PDF after publication.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="row g-3 mt-3">
+                    <div class="col-md-6">
+                        <div class="exam-info-box">
+                            <small>Student</small>
+                            <strong><%= FileUtil.h(submission.getStudentName()) %></strong>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="exam-info-box">
+                            <small>Score</small>
+                            <strong><%= FileUtil.h(submission.getScoreSummary()) %></strong>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="exam-info-box">
+                            <small>Percentage</small>
+                            <strong><%= FileUtil.h(submission.getPercentageDisplay()) %></strong>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="exam-info-box">
+                            <small>Status</small>
+                            <strong><%= FileUtil.h(submission.getStatus()) %></strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-warning mt-3 mb-0">
+                    <strong>Check before publishing:</strong>
+                    Publish only after confirming marks and review status are correct.
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-outline-secondary" type="button" data-bs-dismiss="modal">
+                    Cancel
+                </button>
+
+                <form method="post"
+                      action="<%= request.getContextPath() %>/publish-result"
+                      class="d-inline">
+                    <input type="hidden"
+                           name="submissionId"
+                           value="<%= safeSubmissionId %>">
+
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-send-check-fill me-2"></i>
+                        Publish Result
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+<% } %>
 
 <% }
 } %>
