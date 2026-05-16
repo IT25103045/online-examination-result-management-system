@@ -110,6 +110,8 @@ import java.util.Set;
         "/manual-marking",
         "/manual-marking/index.jsp",
 
+        "/publish-result",
+
         "/exam-attempts",
         "/exam-attempts/index.jsp",
 
@@ -206,6 +208,8 @@ public class AuthFilter implements Filter {
 
             "/manual-marking",
             "/manual-marking/index.jsp",
+
+            "/publish-result",
 
             "/faculties",
             "/faculties/index.jsp",
