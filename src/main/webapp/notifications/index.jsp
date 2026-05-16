@@ -80,13 +80,14 @@
                         <h1 class="hero-title">Notifications</h1>
 
                         <p class="hero-text">
-                            View important academic updates such as result publishing, document verification,
-                            feedback responses, notices, and system messages.
+                            View important academic updates such as result publishing, result appeals,
+                            document verification, feedback responses, notices, and system messages.
                         </p>
                     </div>
 
                     <form action="<%= request.getContextPath() %>/notifications" method="post">
                         <input type="hidden" name="action" value="markAllRead">
+
                         <button type="submit" class="btn btn-primary">
                             <i class="bi bi-check2-all me-2"></i>
                             Mark All Read
@@ -96,7 +97,7 @@
             </div>
 
             <% if (!alertMessage.isEmpty()) { %>
-                <div class="alert alert-<%= alertType %>" data-auto-close="5000">
+                <div class="alert alert-<%= FileUtil.h(alertType) %>" data-auto-close="5000">
                     <% if ("success".equals(alertType)) { %>
                         <i class="bi bi-check-circle-fill me-1"></i>
                     <% } else { %>
@@ -115,6 +116,7 @@
                                 <div class="stat-value"><%= totalCount %></div>
                                 <div class="stat-meta">All notifications</div>
                             </div>
+
                             <div class="stat-icon">
                                 <i class="bi bi-bell-fill"></i>
                             </div>
@@ -130,6 +132,7 @@
                                 <div class="stat-value"><%= unreadCount %></div>
                                 <div class="stat-meta">Need attention</div>
                             </div>
+
                             <div class="stat-icon">
                                 <i class="bi bi-bell"></i>
                             </div>
@@ -145,6 +148,7 @@
                                 <div class="stat-value"><%= readCount %></div>
                                 <div class="stat-meta">Already reviewed</div>
                             </div>
+
                             <div class="stat-icon">
                                 <i class="bi bi-check2-circle"></i>
                             </div>
@@ -173,6 +177,7 @@
                         <div class="empty-state-icon">
                             <i class="bi bi-bell-slash"></i>
                         </div>
+
                         <h5>No notifications yet</h5>
                         <p>Important academic updates will appear here.</p>
                     </div>
@@ -225,6 +230,14 @@
                                                     Mark Read
                                                 </button>
                                             </form>
+                                        <% } %>
+
+                                        <% if (!notification.getTargetUrl().isEmpty()) { %>
+                                            <a href="<%= request.getContextPath() %><%= FileUtil.h(notification.getTargetUrl()) %>"
+                                               class="btn btn-sm btn-primary">
+                                                <i class="bi bi-box-arrow-up-right me-1"></i>
+                                                Open
+                                            </a>
                                         <% } %>
 
                                         <form action="<%= request.getContextPath() %>/notifications" method="post">
