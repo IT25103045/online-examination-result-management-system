@@ -61,6 +61,11 @@ import java.util.Set;
         "/notifications",
         "/notifications/index.jsp",
 
+        "/reports",
+        "/reports/index.jsp",
+
+        "/export-report",
+
         "/faculties",
         "/faculties/index.jsp",
 
@@ -205,6 +210,11 @@ public class AuthFilter implements Filter {
 
             "/results",
             "/results/index.jsp",
+
+            "/reports",
+            "/reports/index.jsp",
+
+            "/export-report",
 
             "/integrity",
             "/integrity/index.jsp",
