@@ -1657,7 +1657,7 @@
                                     <div class="col-md-4">
                                         <button class="btn btn-outline-primary w-100 demo-role-btn"
                                                 type="button"
-                                                data-demo-username="lecturer01"
+                                                data-demo-username="lecturer"
                                                 data-demo-role="Lecturer">
                                             <i class="bi bi-person-video3 me-1"></i>
                                             Lecturer
@@ -1667,7 +1667,7 @@
                                     <div class="col-md-4">
                                         <button class="btn btn-outline-primary w-100 demo-role-btn"
                                                 type="button"
-                                                data-demo-username="student01"
+                                                data-demo-username="student"
                                                 data-demo-role="Student">
                                             <i class="bi bi-mortarboard me-1"></i>
                                             Student
