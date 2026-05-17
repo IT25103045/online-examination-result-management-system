@@ -1,0 +1,10 @@
+appName|NextExamLK
+institutionName|Sri Lanka Institute of Information Technology
+academicYear|2026
+semester|Year 1 Semester 2
+supportEmail|support@nextexam.lk
+supportPhone|+94 77 000 0000
+footerText|Secure Online Examination and Result Management Platform
+systemStatus|Online
+defaultExamNote|Please read all exam rules carefully before starting the examination.
+helpDeskMessage|Contact the academic support team if you face login, exam, result, or document issues.

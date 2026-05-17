@@ -6573,3 +6573,162 @@ body.sidebar-open {
         margin-top: 16px;
     }
 }
+/* ================================
+   Pack 21 - System Settings Panel
+================================ */
+.settings-form-card {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.07), transparent 34%),
+        #ffffff;
+}
+
+.settings-section-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+}
+
+.settings-section-heading h4 {
+    color: var(--dark);
+    font-size: 18px;
+    font-weight: 950;
+    margin-bottom: 3px;
+}
+
+.settings-section-heading p {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 750;
+    margin-bottom: 0;
+}
+
+.settings-preview-card {
+    position: sticky;
+    top: 96px;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.08), transparent 32%),
+        #ffffff;
+}
+
+.settings-preview-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 18px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    box-shadow: var(--shadow-xs);
+    margin-bottom: 16px;
+}
+
+.settings-preview-logo {
+    width: 58px;
+    height: 58px;
+    border-radius: 22px;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+    box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+}
+
+.settings-preview-brand h3 {
+    font-size: 20px;
+    font-weight: 950;
+    color: var(--dark);
+    margin-bottom: 2px;
+    letter-spacing: -0.04em;
+}
+
+.settings-preview-brand p {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 0;
+}
+
+.settings-preview-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.settings-preview-list div {
+    padding: 14px;
+    border-radius: 18px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+.settings-preview-list small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 4px;
+}
+
+.settings-preview-list strong {
+    display: block;
+    color: var(--dark);
+    font-size: 14px;
+    font-weight: 950;
+    line-height: 1.35;
+}
+
+.settings-help-card {
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.08), transparent 34%),
+        #ffffff;
+}
+
+@media (max-width: 1199px) {
+    .settings-preview-card {
+        position: static;
+    }
+}
+
+@media (max-width: 576px) {
+    .settings-preview-brand {
+        align-items: flex-start;
+    }
+
+    .settings-preview-logo {
+        width: 50px;
+        height: 50px;
+        border-radius: 18px;
+        font-size: 21px;
+    }
+
+    .settings-preview-brand h3 {
+        font-size: 17px;
+    }
+}
+/* ================================
+   Pack 21 - Topbar Branding Polish
+================================ */
+.topbar-academic-meta {
+    color: var(--muted-light);
+    font-weight: 750;
+}
+
+.topbar-status-pill {
+    white-space: nowrap;
+}
+
+@media (max-width: 1199px) {
+    .topbar-status-pill {
+        display: none !important;
+    }
+}

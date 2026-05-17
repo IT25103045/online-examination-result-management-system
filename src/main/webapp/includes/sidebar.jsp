@@ -352,13 +352,11 @@
                     <span>Audit Logs</span>
                 </a>
 
-                <% if (showAcademicExpansion) { %>
-                    <a class="sidebar-link <%= "settings".equals(sbActiveMenu) ? "active" : "" %>"
-                       href="<%= request.getContextPath() %>/settings">
-                        <i class="bi bi-sliders"></i>
-                        <span>Settings</span>
-                    </a>
-                <% } %>
+                <a class="sidebar-link <%= "settings".equals(sbActiveMenu) ? "active" : "" %>"
+                   href="<%= request.getContextPath() %>/settings">
+                    <i class="bi bi-sliders"></i>
+                    <span>System Settings</span>
+                </a>
             <% } %>
 
             <!-- Account -->

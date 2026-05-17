@@ -1,11 +1,17 @@
 <%--
     Topbar component for Nextexam dashboard layout.
-    Displays page actions, user information, notifications, and responsive navigation controls.
-    Responsible Member: IT25103045 - De Silva H.L.D.C.P.C
+    Displays page actions, user information, notifications, branding, and responsive navigation controls.
+
+    Pack 21:
+    System Settings & Branding Panel integration.
+
+    Responsible Member:
+    IT25103045 - De Silva H.L.D.C.P.C
 --%>
 
 <%@ page import="lk.nextexam.dao.FileUtil" %>
 <%@ page import="lk.nextexam.dao.NotificationDAO" %>
+<%@ page import="lk.nextexam.dao.SystemSettingDAO" %>
 
 <%
     String tbUsername = "";
@@ -58,17 +64,67 @@
         tbSafeTitle = "Dashboard";
     }
 
-    String tbSubtitle = "NextExamLK Secure Examination Platform";
+    /*
+     * Pack 21 branding settings.
+     * These values come from WEB-INF/data/system_settings.txt.
+     */
+    SystemSettingDAO tbSettingDAO = new SystemSettingDAO();
+
+    String tbAppName = "NextExamLK";
+    String tbInstitutionName = "Secure Examination Platform";
+    String tbAcademicYear = "2026";
+    String tbSemester = "Year 1 Semester 2";
+    String tbSystemStatus = "Online";
+
+    try {
+        tbAppName = tbSettingDAO.getValue(
+                application,
+                SystemSettingDAO.KEY_APP_NAME,
+                "NextExamLK"
+        );
+
+        tbInstitutionName = tbSettingDAO.getValue(
+                application,
+                SystemSettingDAO.KEY_INSTITUTION_NAME,
+                "Secure Examination Platform"
+        );
+
+        tbAcademicYear = tbSettingDAO.getValue(
+                application,
+                SystemSettingDAO.KEY_ACADEMIC_YEAR,
+                "2026"
+        );
+
+        tbSemester = tbSettingDAO.getValue(
+                application,
+                SystemSettingDAO.KEY_SEMESTER,
+                "Year 1 Semester 2"
+        );
+
+        tbSystemStatus = tbSettingDAO.getValue(
+                application,
+                SystemSettingDAO.KEY_SYSTEM_STATUS,
+                "Online"
+        );
+    } catch (Exception e) {
+        tbAppName = "NextExamLK";
+        tbInstitutionName = "Secure Examination Platform";
+        tbAcademicYear = "2026";
+        tbSemester = "Year 1 Semester 2";
+        tbSystemStatus = "Online";
+    }
+
+    String tbSubtitle = tbAppName + " - " + tbInstitutionName;
     String tbRoleIcon = "bi-person-badge";
 
     if ("Student".equalsIgnoreCase(tbDisplayRole)) {
-        tbSubtitle = "Student examination workspace";
+        tbSubtitle = tbAppName + " Student Workspace";
         tbRoleIcon = "bi-mortarboard-fill";
     } else if ("Lecturer".equalsIgnoreCase(tbDisplayRole)) {
-        tbSubtitle = "Lecturer assessment management workspace";
+        tbSubtitle = tbAppName + " Lecturer Workspace";
         tbRoleIcon = "bi-person-video3";
     } else if ("Admin".equalsIgnoreCase(tbDisplayRole)) {
-        tbSubtitle = "Administrative control workspace";
+        tbSubtitle = tbAppName + " Admin Control Workspace";
         tbRoleIcon = "bi-shield-lock-fill";
     }
 
@@ -85,6 +141,14 @@
         tbUnreadNotifications = tbNotificationDAO.countUnreadForUser(application, tbUserId, tbDisplayRole);
     } catch (Exception e) {
         tbUnreadNotifications = 0;
+    }
+
+    String tbStatusBadgeClass = "badge-soft-success";
+
+    if ("Maintenance".equalsIgnoreCase(tbSystemStatus)) {
+        tbStatusBadgeClass = "badge-soft-warning";
+    } else if ("Limited Access".equalsIgnoreCase(tbSystemStatus)) {
+        tbStatusBadgeClass = "badge-soft-info";
     }
 %>
 
@@ -106,6 +170,10 @@
 
             <div class="topbar-subtitle">
                 <%= FileUtil.h(tbSubtitle) %>
+                <span class="topbar-academic-meta d-none d-lg-inline">
+                    · <%= FileUtil.h(tbAcademicYear) %>
+                    · <%= FileUtil.h(tbSemester) %>
+                </span>
             </div>
         </div>
     </div>
@@ -119,12 +187,17 @@
             <input type="search"
                    id="topbarQuickSearch"
                    class="form-control border-start-0"
-                   placeholder="Search current page..."
+                   placeholder="Search modules..."
                    autocomplete="off">
         </div>
     </div>
 
     <div class="topbar-actions">
+        <span class="badge <%= tbStatusBadgeClass %> d-none d-xl-inline-flex align-items-center topbar-status-pill">
+            <i class="bi bi-broadcast-pin me-1"></i>
+            <%= FileUtil.h(tbSystemStatus) %>
+        </span>
+
         <a href="<%= request.getContextPath() %>/notifications"
            class="notification-btn"
            title="View notifications"
