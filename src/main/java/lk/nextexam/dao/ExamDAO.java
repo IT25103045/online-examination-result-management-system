@@ -3,34 +3,48 @@ package lk.nextexam.dao;
 import jakarta.servlet.ServletContext;
 import lk.nextexam.model.Exam;
 
+import java.sql.Connection;
+import java.sql.Date;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * Professional DAO for exam management.
+ * Professional MySQL DAO for exam management.
  *
- * Storage file:
- * exams.txt
+ * MySQL table:
+ * exams
  *
- * Format:
- * examId|subject|examDate|duration|totalMarks|status
+ * Columns:
+ * exam_id, subject, exam_date, duration, total_marks, status
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class ExamDAO {
 
-    private static final String FILE_NAME = "exams.txt";
-
     public List<Exam> getAllExams(ServletContext context) {
         List<Exam> exams = new ArrayList<>();
-        List<String> lines = FileUtil.readLines(context, FILE_NAME);
 
-        for (String line : lines) {
-            Exam exam = Exam.fromFileString(line);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "ORDER BY exam_date ASC, exam_id ASC";
 
-            if (exam != null && !exam.getExamId().isEmpty()) {
-                exams.add(exam);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                exams.add(mapResultSetToExam(resultSet));
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getAllExams failed");
+            e.printStackTrace();
         }
 
         exams.sort(examDateComparator());
@@ -44,10 +58,25 @@ public class ExamDAO {
             return null;
         }
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.getExamId().equalsIgnoreCase(cleanExamId)) {
-                return exam;
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanExamId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToExam(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getExamById failed for " + cleanExamId);
+            e.printStackTrace();
         }
 
         return null;
@@ -55,16 +84,31 @@ public class ExamDAO {
 
     public List<Exam> getExamsByStatus(ServletContext context, String status) {
         List<Exam> selectedExams = new ArrayList<>();
-        String cleanStatus = FileUtil.clean(status);
+        String cleanStatus = normalizeStatusInput(status);
 
         if (cleanStatus.isEmpty()) {
             return selectedExams;
         }
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.getStatus().equalsIgnoreCase(cleanStatus)) {
-                selectedExams.add(exam);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE LOWER(TRIM(status)) = LOWER(TRIM(?)) " +
+                "ORDER BY exam_date ASC, exam_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedExams.add(mapResultSetToExam(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getExamsByStatus failed for " + cleanStatus);
+            e.printStackTrace();
         }
 
         selectedExams.sort(examDateComparator());
@@ -94,10 +138,26 @@ public class ExamDAO {
     public List<Exam> getCompletedExams(ServletContext context) {
         List<Exam> completedExams = new ArrayList<>();
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.isCompleted() || exam.isPublished()) {
-                completedExams.add(exam);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE LOWER(TRIM(status)) IN (LOWER(?), LOWER(?)) " +
+                "ORDER BY exam_date ASC, exam_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, Exam.STATUS_COMPLETED);
+            statement.setString(2, Exam.STATUS_PUBLISHED);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    completedExams.add(mapResultSetToExam(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getCompletedExams failed");
+            e.printStackTrace();
         }
 
         completedExams.sort(examDateComparator());
@@ -107,10 +167,28 @@ public class ExamDAO {
     public List<Exam> getClosedExams(ServletContext context) {
         List<Exam> closedExams = new ArrayList<>();
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.isClosed()) {
-                closedExams.add(exam);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE LOWER(TRIM(status)) IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?)) " +
+                "ORDER BY exam_date ASC, exam_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, Exam.STATUS_COMPLETED);
+            statement.setString(2, Exam.STATUS_PUBLISHED);
+            statement.setString(3, Exam.STATUS_CANCELLED);
+            statement.setString(4, Exam.STATUS_INACTIVE);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    closedExams.add(mapResultSetToExam(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getClosedExams failed");
+            e.printStackTrace();
         }
 
         closedExams.sort(examDateComparator());
@@ -120,10 +198,31 @@ public class ExamDAO {
     public List<Exam> getAttemptableExams(ServletContext context) {
         List<Exam> attemptableExams = new ArrayList<>();
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.canStudentAttempt()) {
-                attemptableExams.add(exam);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE LOWER(TRIM(status)) IN (LOWER(?), LOWER(?), LOWER(?)) " +
+                "ORDER BY exam_date ASC, exam_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, Exam.STATUS_SCHEDULED);
+            statement.setString(2, Exam.STATUS_ACTIVE);
+            statement.setString(3, Exam.STATUS_ONGOING);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    Exam exam = mapResultSetToExam(resultSet);
+
+                    if (exam.canStudentAttempt()) {
+                        attemptableExams.add(exam);
+                    }
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getAttemptableExams failed");
+            e.printStackTrace();
         }
 
         attemptableExams.sort(examDateComparator());
@@ -133,10 +232,29 @@ public class ExamDAO {
     public List<Exam> getUpcomingExams(ServletContext context) {
         List<Exam> upcomingExams = new ArrayList<>();
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.isFutureDate() && !exam.isClosed()) {
-                upcomingExams.add(exam);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE exam_date > CURRENT_DATE() " +
+                "AND LOWER(TRIM(status)) NOT IN (LOWER(?), LOWER(?), LOWER(?), LOWER(?)) " +
+                "ORDER BY exam_date ASC, exam_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, Exam.STATUS_COMPLETED);
+            statement.setString(2, Exam.STATUS_PUBLISHED);
+            statement.setString(3, Exam.STATUS_CANCELLED);
+            statement.setString(4, Exam.STATUS_INACTIVE);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    upcomingExams.add(mapResultSetToExam(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getUpcomingExams failed");
+            e.printStackTrace();
         }
 
         upcomingExams.sort(examDateComparator());
@@ -146,10 +264,22 @@ public class ExamDAO {
     public List<Exam> getTodayExams(ServletContext context) {
         List<Exam> todayExams = new ArrayList<>();
 
-        for (Exam exam : getAllExams(context)) {
-            if (exam.isToday()) {
-                todayExams.add(exam);
+        String sql = "SELECT exam_id, subject, exam_date, duration, total_marks, status " +
+                "FROM exams " +
+                "WHERE exam_date = CURRENT_DATE() " +
+                "ORDER BY exam_date ASC, exam_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                todayExams.add(mapResultSetToExam(resultSet));
             }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> getTodayExams failed");
+            e.printStackTrace();
         }
 
         todayExams.sort(examDateComparator());
@@ -206,7 +336,21 @@ public class ExamDAO {
             return false;
         }
 
-        return FileUtil.appendLine(context, FILE_NAME, exam.toFileString());
+        String sql = "INSERT INTO exams " +
+                "(exam_id, subject, exam_date, duration, total_marks, status) " +
+                "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            fillExamStatement(statement, exam);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> addExam failed");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean updateExam(ServletContext context, Exam exam) {
@@ -214,7 +358,32 @@ public class ExamDAO {
             return false;
         }
 
-        return FileUtil.updateLineById(context, FILE_NAME, exam.getExamId(), exam.toFileString());
+        String sql = "UPDATE exams SET " +
+                "subject = ?, " +
+                "exam_date = ?, " +
+                "duration = ?, " +
+                "total_marks = ?, " +
+                "status = ? " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, exam.getSubject());
+            statement.setDate(2, Date.valueOf(exam.getExamLocalDate()));
+            statement.setInt(3, exam.getDurationMinutes());
+            statement.setDouble(4, exam.getTotalMarksAsDouble());
+            statement.setString(5, exam.getStatus());
+            statement.setString(6, exam.getExamId());
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> updateExam failed for " +
+                    (exam != null ? exam.getExamId() : ""));
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean deleteExam(ServletContext context, String examId) {
@@ -239,21 +408,57 @@ public class ExamDAO {
             return false;
         }
 
-        return FileUtil.deleteLineById(context, FILE_NAME, cleanExamId);
+        String sql = "DELETE FROM exams WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanExamId);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> deleteExam failed for " + cleanExamId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean existsById(ServletContext context, String examId) {
-        return FileUtil.existsById(context, FILE_NAME, examId);
-    }
+        String cleanExamId = FileUtil.clean(examId);
 
-    public boolean updateExamStatus(ServletContext context, String examId, String newStatus) {
-        String cleanStatus = FileUtil.clean(newStatus);
-
-        if (cleanStatus.isEmpty()) {
+        if (cleanExamId.isEmpty()) {
             return false;
         }
 
-        Exam exam = getExamById(context, examId);
+        String sql = "SELECT exam_id FROM exams " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanExamId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> existsById failed for " + cleanExamId);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateExamStatus(ServletContext context, String examId, String newStatus) {
+        String cleanExamId = FileUtil.clean(examId);
+        String cleanStatus = normalizeStatusInput(newStatus);
+
+        if (cleanExamId.isEmpty() || cleanStatus.isEmpty()) {
+            return false;
+        }
+
+        Exam exam = getExamById(context, cleanExamId);
 
         if (exam == null) {
             return false;
@@ -265,7 +470,22 @@ public class ExamDAO {
             return false;
         }
 
-        return updateExam(context, exam);
+        String sql = "UPDATE exams SET status = ? " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+            statement.setString(2, cleanExamId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> updateExamStatus failed for " + cleanExamId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean markAsDraft(ServletContext context, String examId) {
@@ -301,7 +521,7 @@ public class ExamDAO {
     }
 
     public int countAllExams(ServletContext context) {
-        return getAllExams(context).size();
+        return countByQuery("SELECT COUNT(*) FROM exams");
     }
 
     public int countDraftExams(ServletContext context) {
@@ -321,7 +541,15 @@ public class ExamDAO {
     }
 
     public int countAttemptableExams(ServletContext context) {
-        return getAttemptableExams(context).size();
+        String sql = "SELECT COUNT(*) FROM exams " +
+                "WHERE LOWER(TRIM(status)) IN (LOWER(?), LOWER(?), LOWER(?))";
+
+        return countByThreeParameterQuery(
+                sql,
+                Exam.STATUS_SCHEDULED,
+                Exam.STATUS_ACTIVE,
+                Exam.STATUS_ONGOING
+        );
     }
 
     public int countCompletedExams(ServletContext context) {
@@ -341,36 +569,45 @@ public class ExamDAO {
     }
 
     public int countTodayExams(ServletContext context) {
-        return getTodayExams(context).size();
+        return countByQuery("SELECT COUNT(*) FROM exams WHERE exam_date = CURRENT_DATE()");
     }
 
     public int countUpcomingExams(ServletContext context) {
-        return getUpcomingExams(context).size();
+        return countByQuery(
+                "SELECT COUNT(*) FROM exams " +
+                        "WHERE exam_date > CURRENT_DATE() " +
+                        "AND LOWER(TRIM(status)) NOT IN " +
+                        "(LOWER('Completed'), LOWER('Published'), LOWER('Cancelled'), LOWER('Inactive'))"
+        );
     }
 
     public int countByStatus(ServletContext context, String status) {
-        String cleanStatus = FileUtil.clean(status);
+        String cleanStatus = normalizeStatusInput(status);
 
         if (cleanStatus.isEmpty()) {
             return 0;
         }
 
-        int count = 0;
-
-        for (Exam exam : getAllExams(context)) {
-            if (exam.getStatus().equalsIgnoreCase(cleanStatus)) {
-                count++;
-            }
-        }
-
-        return count;
+        String sql = "SELECT COUNT(*) FROM exams WHERE LOWER(TRIM(status)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanStatus);
     }
 
     public double calculateTotalExamMarks(ServletContext context) {
         double total = 0.0;
 
-        for (Exam exam : getAllExams(context)) {
-            total += exam.getTotalMarksAsDouble();
+        String sql = "SELECT COALESCE(SUM(total_marks), 0) AS total_marks_sum FROM exams";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                total = resultSet.getDouble("total_marks_sum");
+            }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> calculateTotalExamMarks failed");
+            e.printStackTrace();
         }
 
         return total;
@@ -381,7 +618,7 @@ public class ExamDAO {
             return false;
         }
 
-        return !FileUtil.existsById(context, FILE_NAME, exam.getExamId());
+        return !existsById(context, exam.getExamId());
     }
 
     private boolean isValidForUpdate(ServletContext context, Exam exam) {
@@ -389,11 +626,143 @@ public class ExamDAO {
             return false;
         }
 
-        return FileUtil.existsById(context, FILE_NAME, exam.getExamId());
+        return existsById(context, exam.getExamId());
     }
 
     private boolean isExamObjectValid(Exam exam) {
         return exam != null && exam.isCompleteForSave();
+    }
+
+    private int countByQuery(String sql) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> countByQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private int countBySingleParameterQuery(String sql, String parameter) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, parameter);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> countBySingleParameterQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private int countByThreeParameterQuery(String sql,
+                                           String first,
+                                           String second,
+                                           String third) {
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, first);
+            statement.setString(2, second);
+            statement.setString(3, third);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("EXAMDAO ERROR -> countByThreeParameterQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private void fillExamStatement(PreparedStatement statement, Exam exam) throws SQLException {
+        statement.setString(1, exam.getExamId());
+        statement.setString(2, exam.getSubject());
+        statement.setDate(3, Date.valueOf(exam.getExamLocalDate()));
+        statement.setInt(4, exam.getDurationMinutes());
+        statement.setDouble(5, exam.getTotalMarksAsDouble());
+        statement.setString(6, exam.getStatus());
+    }
+
+    private Exam mapResultSetToExam(ResultSet resultSet) throws SQLException {
+        Date sqlDate = resultSet.getDate("exam_date");
+        String examDate = sqlDate == null ? "" : sqlDate.toLocalDate().toString();
+
+        return new Exam(
+                safe(resultSet.getString("exam_id")),
+                safe(resultSet.getString("subject")),
+                examDate,
+                String.valueOf(resultSet.getInt("duration")),
+                formatMarks(resultSet.getDouble("total_marks")),
+                normalizeStatusInput(resultSet.getString("status"))
+        );
+    }
+
+    private String normalizeStatusInput(String value) {
+        String statusValue = safe(value);
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_DRAFT)) {
+            return Exam.STATUS_DRAFT;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_SCHEDULED)) {
+            return Exam.STATUS_SCHEDULED;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_ACTIVE)) {
+            return Exam.STATUS_ACTIVE;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_ONGOING)) {
+            return Exam.STATUS_ONGOING;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_COMPLETED)) {
+            return Exam.STATUS_COMPLETED;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_PUBLISHED)) {
+            return Exam.STATUS_PUBLISHED;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_CANCELLED)) {
+            return Exam.STATUS_CANCELLED;
+        }
+
+        if (statusValue.equalsIgnoreCase(Exam.STATUS_INACTIVE)) {
+            return Exam.STATUS_INACTIVE;
+        }
+
+        return statusValue;
+    }
+
+    private String formatMarks(double marks) {
+        if (marks == Math.floor(marks)) {
+            return String.valueOf((int) marks);
+        }
+
+        return String.format("%.2f", marks);
     }
 
     private Comparator<Exam> examDateComparator() {
@@ -405,5 +774,9 @@ public class ExamDAO {
                         }
                 )
                 .thenComparing(Exam::getExamId, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

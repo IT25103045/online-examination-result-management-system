@@ -3,103 +3,235 @@ package lk.nextexam.dao;
 import jakarta.servlet.ServletContext;
 import lk.nextexam.model.StudentDocument;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * StudentDocumentDAO handles document verification file operations.
+ * StudentDocumentDAO handles MySQL document verification operations.
  *
- * Storage file:
- * documents.txt
+ * MySQL table:
+ * student_documents
  *
- * This DAO demonstrates abstraction by hiding file read/write logic
- * from servlet and JSP layers.
+ * Columns:
+ * document_id, student_id, student_name, document_type, file_name,
+ * file_path, status, review_note, uploaded_at, reviewed_at
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class StudentDocumentDAO {
 
-    private static final String FILE_NAME = "documents.txt";
-
-    private static final DateTimeFormatter DISPLAY_DATE_TIME =
+    private static final DateTimeFormatter STORAGE_DATE_TIME =
             DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public boolean addDocument(ServletContext context, StudentDocument document) {
-        if (document == null || !document.isCompleteForSave()) {
+        if (document == null) {
             return false;
         }
 
-        return FileUtil.appendLine(context, FILE_NAME, document.toFileString());
+        if (document.getDocumentId().isEmpty()) {
+            document.setDocumentId(FileUtil.generateId("DOC"));
+        }
+
+        if (document.getUploadedAt().isEmpty()) {
+            document.setUploadedAt(now());
+        }
+
+        if (document.getStatus().isEmpty()) {
+            document.setStatus(StudentDocument.STATUS_PENDING);
+        }
+
+        if (!document.isCompleteForSave()) {
+            return false;
+        }
+
+        if (existsById(document.getDocumentId())) {
+            document.setDocumentId(FileUtil.generateId("DOC"));
+        }
+
+        String sql = "INSERT INTO student_documents " +
+                "(document_id, student_id, student_name, document_type, file_name, file_path, status, review_note, uploaded_at, reviewed_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            fillDocumentStatement(statement, document);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> addDocument failed");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public List<StudentDocument> getAllDocuments(ServletContext context) {
         List<StudentDocument> documents = new ArrayList<>();
-        List<String> lines = FileUtil.readLines(context, FILE_NAME);
 
-        for (String line : lines) {
-            StudentDocument document = StudentDocument.fromFileString(line);
+        String sql = "SELECT document_id, student_id, student_name, document_type, file_name, " +
+                "file_path, status, review_note, uploaded_at, reviewed_at " +
+                "FROM student_documents " +
+                "ORDER BY uploaded_at DESC, document_id DESC";
 
-            if (document != null && !document.getDocumentId().isEmpty()) {
-                documents.add(document);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                documents.add(mapResultSetToDocument(resultSet));
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> getAllDocuments failed");
+            e.printStackTrace();
         }
 
-        documents.sort(Comparator.comparing(StudentDocument::getUploadedAt, String.CASE_INSENSITIVE_ORDER).reversed());
+        documents.sort(documentComparator());
         return documents;
     }
 
     public StudentDocument getDocumentById(ServletContext context, String documentId) {
-        String safeDocumentId = FileUtil.clean(documentId);
+        String cleanDocumentId = FileUtil.clean(documentId);
 
-        if (safeDocumentId.isEmpty()) {
+        if (cleanDocumentId.isEmpty()) {
             return null;
         }
 
-        for (StudentDocument document : getAllDocuments(context)) {
-            if (document.getDocumentId().equalsIgnoreCase(safeDocumentId)) {
-                return document;
+        String sql = "SELECT document_id, student_id, student_name, document_type, file_name, " +
+                "file_path, status, review_note, uploaded_at, reviewed_at " +
+                "FROM student_documents " +
+                "WHERE LOWER(TRIM(document_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanDocumentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToDocument(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> getDocumentById failed for " + cleanDocumentId);
+            e.printStackTrace();
         }
 
         return null;
     }
 
     public List<StudentDocument> getDocumentsByStudentId(ServletContext context, String studentId) {
-        List<StudentDocument> selectedDocuments = new ArrayList<>();
-        String safeStudentId = FileUtil.clean(studentId);
+        List<StudentDocument> documents = new ArrayList<>();
+        String cleanStudentId = FileUtil.clean(studentId);
 
-        if (safeStudentId.isEmpty()) {
-            return selectedDocuments;
+        if (cleanStudentId.isEmpty()) {
+            return documents;
         }
 
-        for (StudentDocument document : getAllDocuments(context)) {
-            if (document.getStudentId().equalsIgnoreCase(safeStudentId)) {
-                selectedDocuments.add(document);
+        String sql = "SELECT document_id, student_id, student_name, document_type, file_name, " +
+                "file_path, status, review_note, uploaded_at, reviewed_at " +
+                "FROM student_documents " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?)) " +
+                "ORDER BY uploaded_at DESC, document_id DESC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    documents.add(mapResultSetToDocument(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> getDocumentsByStudentId failed for " + cleanStudentId);
+            e.printStackTrace();
         }
 
-        return selectedDocuments;
+        documents.sort(documentComparator());
+        return documents;
     }
 
     public List<StudentDocument> getDocumentsByStatus(ServletContext context, String status) {
-        List<StudentDocument> selectedDocuments = new ArrayList<>();
-        String safeStatus = FileUtil.clean(status);
+        List<StudentDocument> documents = new ArrayList<>();
+        String cleanStatus = normalizeStatusInput(status);
 
-        if (safeStatus.isEmpty()) {
-            return selectedDocuments;
+        if (cleanStatus.isEmpty()) {
+            return documents;
         }
 
-        for (StudentDocument document : getAllDocuments(context)) {
-            if (document.getStatus().equalsIgnoreCase(safeStatus)) {
-                selectedDocuments.add(document);
+        String sql = "SELECT document_id, student_id, student_name, document_type, file_name, " +
+                "file_path, status, review_note, uploaded_at, reviewed_at " +
+                "FROM student_documents " +
+                "WHERE LOWER(TRIM(status)) = LOWER(TRIM(?)) " +
+                "ORDER BY uploaded_at DESC, document_id DESC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    documents.add(mapResultSetToDocument(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> getDocumentsByStatus failed for " + cleanStatus);
+            e.printStackTrace();
         }
 
-        return selectedDocuments;
+        documents.sort(documentComparator());
+        return documents;
+    }
+
+    public List<StudentDocument> getDocumentsByType(ServletContext context, String documentType) {
+        List<StudentDocument> documents = new ArrayList<>();
+        String cleanType = normalizeDocumentTypeInput(documentType);
+
+        if (cleanType.isEmpty()) {
+            return documents;
+        }
+
+        String sql = "SELECT document_id, student_id, student_name, document_type, file_name, " +
+                "file_path, status, review_note, uploaded_at, reviewed_at " +
+                "FROM student_documents " +
+                "WHERE LOWER(TRIM(document_type)) = LOWER(TRIM(?)) " +
+                "ORDER BY uploaded_at DESC, document_id DESC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanType);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    documents.add(mapResultSetToDocument(resultSet));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> getDocumentsByType failed for " + cleanType);
+            e.printStackTrace();
+        }
+
+        documents.sort(documentComparator());
+        return documents;
     }
 
     public boolean approveDocument(ServletContext context, String documentId, String reviewNote) {
@@ -124,13 +256,21 @@ public class StudentDocumentDAO {
                                         String documentId,
                                         String status,
                                         String reviewNote) {
-        StudentDocument document = getDocumentById(context, documentId);
+
+        String cleanDocumentId = FileUtil.clean(documentId);
+        String cleanStatus = normalizeStatusInput(status);
+
+        if (cleanDocumentId.isEmpty() || cleanStatus.isEmpty()) {
+            return false;
+        }
+
+        StudentDocument document = getDocumentById(context, cleanDocumentId);
 
         if (document == null) {
             return false;
         }
 
-        document.setStatus(status);
+        document.setStatus(cleanStatus);
         document.setReviewNote(FileUtil.isBlank(reviewNote) ? "-" : reviewNote);
         document.setReviewedAt(now());
 
@@ -138,41 +278,326 @@ public class StudentDocumentDAO {
             return false;
         }
 
-        return FileUtil.updateLineById(
-                context,
-                FILE_NAME,
-                document.getDocumentId(),
-                document.toFileString()
-        );
+        String sql = "UPDATE student_documents SET " +
+                "status = ?, " +
+                "review_note = ?, " +
+                "reviewed_at = ? " +
+                "WHERE LOWER(TRIM(document_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, document.getStatus());
+            statement.setString(2, document.getReviewNote());
+            statement.setTimestamp(3, toTimestamp(document.getReviewedAt()));
+            statement.setString(4, cleanDocumentId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> updateDocumentStatus failed for " + cleanDocumentId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
-    public boolean deleteDocument(ServletContext context, String documentId) {
-        String safeDocumentId = FileUtil.clean(documentId);
-
-        if (safeDocumentId.isEmpty()) {
+    public boolean updateDocument(ServletContext context, StudentDocument document) {
+        if (document == null || document.getDocumentId().isEmpty()) {
             return false;
         }
 
-        return FileUtil.deleteLineById(context, FILE_NAME, safeDocumentId);
+        if (!document.isCompleteForSave()) {
+            return false;
+        }
+
+        String sql = "UPDATE student_documents SET " +
+                "student_id = ?, " +
+                "student_name = ?, " +
+                "document_type = ?, " +
+                "file_name = ?, " +
+                "file_path = ?, " +
+                "status = ?, " +
+                "review_note = ?, " +
+                "uploaded_at = ?, " +
+                "reviewed_at = ? " +
+                "WHERE LOWER(TRIM(document_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, document.getStudentId());
+            statement.setString(2, document.getStudentName());
+            statement.setString(3, document.getDocumentType());
+            statement.setString(4, document.getFileName());
+            statement.setString(5, document.getFilePath());
+            statement.setString(6, document.getStatus());
+            statement.setString(7, document.getReviewNote());
+            statement.setTimestamp(8, toTimestamp(document.getUploadedAt()));
+            statement.setTimestamp(9, toNullableTimestamp(document.getReviewedAt()));
+            statement.setString(10, document.getDocumentId());
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> updateDocument failed for " +
+                    (document != null ? document.getDocumentId() : ""));
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean deleteDocument(ServletContext context, String documentId) {
+        String cleanDocumentId = FileUtil.clean(documentId);
+
+        if (cleanDocumentId.isEmpty()) {
+            return false;
+        }
+
+        String sql = "DELETE FROM student_documents " +
+                "WHERE LOWER(TRIM(document_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanDocumentId);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> deleteDocument failed for " + cleanDocumentId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public int countAllDocuments(ServletContext context) {
-        return getAllDocuments(context).size();
+        return countByQuery("SELECT COUNT(*) FROM student_documents");
     }
 
     public int countPendingDocuments(ServletContext context) {
-        return getDocumentsByStatus(context, StudentDocument.STATUS_PENDING).size();
+        return countDocumentsByStatus(StudentDocument.STATUS_PENDING);
     }
 
     public int countApprovedDocuments(ServletContext context) {
-        return getDocumentsByStatus(context, StudentDocument.STATUS_APPROVED).size();
+        return countDocumentsByStatus(StudentDocument.STATUS_APPROVED);
     }
 
     public int countRejectedDocuments(ServletContext context) {
-        return getDocumentsByStatus(context, StudentDocument.STATUS_REJECTED).size();
+        return countDocumentsByStatus(StudentDocument.STATUS_REJECTED);
+    }
+
+    public int countDocumentsByStudentId(ServletContext context, String studentId) {
+        String cleanStudentId = FileUtil.clean(studentId);
+
+        if (cleanStudentId.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) FROM student_documents " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?))";
+
+        return countBySingleParameterQuery(sql, cleanStudentId);
     }
 
     public String now() {
-        return LocalDateTime.now().format(DISPLAY_DATE_TIME);
+        return LocalDateTime.now().format(STORAGE_DATE_TIME);
+    }
+
+    private boolean existsById(String documentId) {
+        String cleanDocumentId = FileUtil.clean(documentId);
+
+        if (cleanDocumentId.isEmpty()) {
+            return false;
+        }
+
+        String sql = "SELECT document_id FROM student_documents " +
+                "WHERE LOWER(TRIM(document_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanDocumentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> existsById failed for " + cleanDocumentId);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private int countDocumentsByStatus(String status) {
+        String cleanStatus = normalizeStatusInput(status);
+
+        if (cleanStatus.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) FROM student_documents " +
+                "WHERE LOWER(TRIM(status)) = LOWER(TRIM(?))";
+
+        return countBySingleParameterQuery(sql, cleanStatus);
+    }
+
+    private int countByQuery(String sql) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> countByQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private int countBySingleParameterQuery(String sql, String parameter) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, parameter);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDOCUMENTDAO ERROR -> countBySingleParameterQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private void fillDocumentStatement(PreparedStatement statement,
+                                       StudentDocument document) throws SQLException {
+        statement.setString(1, document.getDocumentId());
+        statement.setString(2, document.getStudentId());
+        statement.setString(3, document.getStudentName());
+        statement.setString(4, document.getDocumentType());
+        statement.setString(5, document.getFileName());
+        statement.setString(6, document.getFilePath());
+        statement.setString(7, document.getStatus());
+        statement.setString(8, document.getReviewNote());
+        statement.setTimestamp(9, toTimestamp(document.getUploadedAt()));
+        statement.setTimestamp(10, toNullableTimestamp(document.getReviewedAt()));
+    }
+
+    private StudentDocument mapResultSetToDocument(ResultSet resultSet) throws SQLException {
+        return new StudentDocument(
+                safe(resultSet.getString("document_id")),
+                safe(resultSet.getString("student_id")),
+                safe(resultSet.getString("student_name")),
+                normalizeDocumentTypeInput(resultSet.getString("document_type")),
+                safe(resultSet.getString("file_name")),
+                safe(resultSet.getString("file_path")),
+                normalizeStatusInput(resultSet.getString("status")),
+                safe(resultSet.getString("review_note")),
+                fromTimestamp(resultSet.getTimestamp("uploaded_at")),
+                fromTimestamp(resultSet.getTimestamp("reviewed_at"))
+        );
+    }
+
+    private Timestamp toTimestamp(String value) {
+        LocalDateTime dateTime = parseDateTime(value);
+
+        if (dateTime == null) {
+            dateTime = LocalDateTime.now();
+        }
+
+        return Timestamp.valueOf(dateTime);
+    }
+
+    private Timestamp toNullableTimestamp(String value) {
+        LocalDateTime dateTime = parseDateTime(value);
+
+        if (dateTime == null) {
+            return null;
+        }
+
+        return Timestamp.valueOf(dateTime);
+    }
+
+    private String fromTimestamp(Timestamp timestamp) {
+        if (timestamp == null) {
+            return "";
+        }
+
+        return timestamp.toLocalDateTime().format(STORAGE_DATE_TIME);
+    }
+
+    private LocalDateTime parseDateTime(String value) {
+        String cleanValue = FileUtil.clean(value);
+
+        if (cleanValue.isEmpty() || cleanValue.equals("-")) {
+            return null;
+        }
+
+        try {
+            return LocalDateTime.parse(cleanValue, STORAGE_DATE_TIME);
+        } catch (DateTimeParseException e) {
+            return null;
+        }
+    }
+
+    private String normalizeStatusInput(String value) {
+        String statusValue = safe(value);
+
+        if (statusValue.equalsIgnoreCase(StudentDocument.STATUS_PENDING)) {
+            return StudentDocument.STATUS_PENDING;
+        }
+
+        if (statusValue.equalsIgnoreCase(StudentDocument.STATUS_APPROVED)) {
+            return StudentDocument.STATUS_APPROVED;
+        }
+
+        if (statusValue.equalsIgnoreCase(StudentDocument.STATUS_REJECTED)) {
+            return StudentDocument.STATUS_REJECTED;
+        }
+
+        return statusValue;
+    }
+
+    private String normalizeDocumentTypeInput(String value) {
+        String typeValue = safe(value);
+
+        if (typeValue.equalsIgnoreCase(StudentDocument.TYPE_STUDENT_ID)) {
+            return StudentDocument.TYPE_STUDENT_ID;
+        }
+
+        if (typeValue.equalsIgnoreCase(StudentDocument.TYPE_MEDICAL)) {
+            return StudentDocument.TYPE_MEDICAL;
+        }
+
+        if (typeValue.equalsIgnoreCase(StudentDocument.TYPE_EXAM_ELIGIBILITY)) {
+            return StudentDocument.TYPE_EXAM_ELIGIBILITY;
+        }
+
+        if (typeValue.equalsIgnoreCase(StudentDocument.TYPE_OTHER)) {
+            return StudentDocument.TYPE_OTHER;
+        }
+
+        return typeValue;
+    }
+
+    private Comparator<StudentDocument> documentComparator() {
+        return Comparator
+                .comparing(StudentDocument::getUploadedAt, String.CASE_INSENSITIVE_ORDER)
+                .reversed()
+                .thenComparing(StudentDocument::getDocumentId, String.CASE_INSENSITIVE_ORDER);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }
