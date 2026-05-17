@@ -5491,3 +5491,66 @@ strong {
         font-size: 12px;
     }
 }
+/* ================================
+   Enterprise Audit Log System
+================================ */
+.audit-table {
+    min-width: 1120px;
+}
+
+.audit-description-cell {
+    max-width: 380px;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.audit-filter-counter {
+    width: fit-content;
+    max-width: 100%;
+    margin: 0 0 14px;
+    padding: 9px 13px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: var(--shadow-xs);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.audit-filter-counter i {
+    color: var(--primary-light);
+}
+
+.audit-empty-state {
+    margin-top: 14px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+@media (max-width: 991px) {
+    .audit-table {
+        min-width: 980px;
+    }
+
+    .audit-description-cell {
+        max-width: 300px;
+    }
+}
+
+@media (max-width: 576px) {
+    .audit-table {
+        min-width: 880px;
+    }
+
+    .audit-filter-counter {
+        width: 100%;
+        justify-content: center;
+        border-radius: 16px;
+    }
+}
