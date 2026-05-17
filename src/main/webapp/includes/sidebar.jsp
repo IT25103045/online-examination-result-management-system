@@ -352,6 +352,12 @@
                     <span>Audit Logs</span>
                 </a>
 
+                <a class="sidebar-link <%= "backup-restore".equals(sbActiveMenu) ? "active" : "" %>"
+                   href="<%= request.getContextPath() %>/backup-restore">
+                    <i class="bi bi-database-lock"></i>
+                    <span>Backup & Restore</span>
+                </a>
+
                 <a class="sidebar-link <%= "settings".equals(sbActiveMenu) ? "active" : "" %>"
                    href="<%= request.getContextPath() %>/settings">
                     <i class="bi bi-sliders"></i>

@@ -154,7 +154,10 @@ import java.util.Set;
         "/outcome-mapping/index.jsp",
 
         "/settings",
-        "/settings/index.jsp"
+        "/settings/index.jsp",
+
+        "/backup-restore",
+        "/backup-restore/index.jsp"
 })
 public class AuthFilter implements Filter {
 
@@ -197,7 +200,10 @@ public class AuthFilter implements Filter {
             "/audit-logs/index.jsp",
 
             "/settings",
-            "/settings/index.jsp"
+            "/settings/index.jsp",
+
+            "/backup-restore",
+            "/backup-restore/index.jsp"
     );
 
     /*
