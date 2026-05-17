@@ -157,7 +157,10 @@ import java.util.Set;
         "/settings/index.jsp",
 
         "/backup-restore",
-        "/backup-restore/index.jsp"
+        "/backup-restore/index.jsp",
+
+        "/academic-record",
+        "/academic-record/index.jsp"
 })
 public class AuthFilter implements Filter {
 
@@ -186,7 +189,10 @@ public class AuthFilter implements Filter {
             "/result-pdf",
 
             "/result-appeals",
-            "/result-appeals/index.jsp"
+            "/result-appeals/index.jsp",
+
+            "/academic-record",
+            "/academic-record/index.jsp"
     );
 
     /*

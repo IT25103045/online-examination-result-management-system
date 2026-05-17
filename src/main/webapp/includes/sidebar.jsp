@@ -116,6 +116,12 @@
                     <span>My Results</span>
                 </a>
 
+                <a class="sidebar-link <%= "academic-record".equals(sbActiveMenu) ? "active" : "" %>"
+                   href="<%= request.getContextPath() %>/academic-record">
+                    <i class="bi bi-file-earmark-person-fill"></i>
+                    <span>Academic Record</span>
+                </a>
+
                 <a class="sidebar-link <%= "result-appeals".equals(sbActiveMenu) ? "active" : "" %>"
                    href="<%= request.getContextPath() %>/result-appeals">
                     <i class="bi bi-arrow-repeat"></i>
@@ -204,6 +210,12 @@
                    href="<%= request.getContextPath() %>/results">
                     <i class="bi bi-bar-chart-fill"></i>
                     <span>Results</span>
+                </a>
+
+                <a class="sidebar-link <%= "academic-record".equals(sbActiveMenu) ? "active" : "" %>"
+                   href="<%= request.getContextPath() %>/academic-record">
+                    <i class="bi bi-file-earmark-person-fill"></i>
+                    <span>Academic Records</span>
                 </a>
 
                 <a class="sidebar-link <%= "reports".equals(sbActiveMenu) ? "active" : "" %>"
