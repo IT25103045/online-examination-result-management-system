@@ -103,6 +103,15 @@ CREATE TABLE notifications (
      target_url VARCHAR(255) DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS feedback (
+                                        feedback_id VARCHAR(30) PRIMARY KEY,
+                                        student_id VARCHAR(30) NOT NULL,
+                                        category VARCHAR(30) NOT NULL,
+                                        message TEXT NOT NULL,
+                                        feedback_date DATE NOT NULL,
+                                        status VARCHAR(30) NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS notices (
                                        notice_id VARCHAR(30) PRIMARY KEY,
                                        title VARCHAR(180) NOT NULL,
@@ -166,6 +175,13 @@ VALUES
     ('NO001', 'Welcome to NextExamLK', 'Welcome to the online examination and result management platform.', '2026-05-17', 'All', 'Normal', 'Published'),
     ('NO002', 'Upcoming OOP Exam', 'Object Oriented Programming exam is scheduled. Please check your exam dashboard.', '2026-05-20', 'Student', 'High', 'Published'),
     ('NO003', 'Lecturer Marking Reminder', 'Please review pending essay submissions before publishing results.', '2026-05-21', 'Lecturer', 'Urgent', 'Published');
+
+INSERT IGNORE INTO feedback
+(feedback_id, student_id, category, message, feedback_date, status)
+VALUES
+    ('FB001', 'USR003', 'Exam', 'The exam interface was easy to use.', '2026-05-17', 'New'),
+    ('FB002', 'USR003', 'Technical', 'Timer should be more visible on mobile devices.', '2026-05-18', 'In Review'),
+    ('FB003', 'ST001', 'Result', 'Please review my published result.', '2026-05-19', 'Resolved');
 
 
 
