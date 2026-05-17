@@ -3,33 +3,46 @@ package lk.nextexam.dao;
 import jakarta.servlet.ServletContext;
 import lk.nextexam.model.Student;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * Professional DAO for Student Management.
+ * Professional MySQL DAO for Student Management.
  *
- * Storage file:
- * students.txt
+ * MySQL table:
+ * students
  *
- * Format:
- * studentId|name|email|course|batch|contact|examStatus
+ * Columns:
+ * student_id, name, email, course, batch, contact, exam_status
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class StudentDAO {
 
-    private static final String FILE_NAME = "students.txt";
-
     public List<Student> getAllStudents(ServletContext context) {
         List<Student> students = new ArrayList<>();
-        List<String> lines = FileUtil.readLines(context, FILE_NAME);
 
-        for (String line : lines) {
-            Student student = Student.fromFileString(line);
+        String sql = "SELECT student_id, name, email, course, batch, contact, exam_status " +
+                "FROM students " +
+                "ORDER BY student_id ASC";
 
-            if (student != null && !student.getStudentId().isEmpty()) {
-                students.add(student);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                students.add(mapResultSetToStudent(resultSet));
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> getAllStudents failed");
+            e.printStackTrace();
         }
 
         students.sort(Comparator.comparing(Student::getStudentId, String.CASE_INSENSITIVE_ORDER));
@@ -43,10 +56,25 @@ public class StudentDAO {
             return null;
         }
 
-        for (Student student : getAllStudents(context)) {
-            if (student.getStudentId().equalsIgnoreCase(cleanStudentId)) {
-                return student;
+        String sql = "SELECT student_id, name, email, course, batch, contact, exam_status " +
+                "FROM students " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToStudent(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> getStudentById failed for " + cleanStudentId);
+            e.printStackTrace();
         }
 
         return null;
@@ -59,10 +87,25 @@ public class StudentDAO {
             return null;
         }
 
-        for (Student student : getAllStudents(context)) {
-            if (student.getEmail().equalsIgnoreCase(cleanEmail)) {
-                return student;
+        String sql = "SELECT student_id, name, email, course, batch, contact, exam_status " +
+                "FROM students " +
+                "WHERE LOWER(TRIM(email)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanEmail);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToStudent(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> getStudentByEmail failed for " + cleanEmail);
+            e.printStackTrace();
         }
 
         return null;
@@ -70,16 +113,31 @@ public class StudentDAO {
 
     public List<Student> getStudentsByBatch(ServletContext context, String batch) {
         List<Student> selectedStudents = new ArrayList<>();
-        String cleanBatch = FileUtil.clean(batch);
+        String cleanBatch = normalizeBatchInput(batch);
 
         if (cleanBatch.isEmpty()) {
             return selectedStudents;
         }
 
-        for (Student student : getAllStudents(context)) {
-            if (student.getBatch().equalsIgnoreCase(cleanBatch)) {
-                selectedStudents.add(student);
+        String sql = "SELECT student_id, name, email, course, batch, contact, exam_status " +
+                "FROM students " +
+                "WHERE LOWER(TRIM(batch)) = LOWER(TRIM(?)) " +
+                "ORDER BY name ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanBatch);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedStudents.add(mapResultSetToStudent(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> getStudentsByBatch failed for " + cleanBatch);
+            e.printStackTrace();
         }
 
         selectedStudents.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
@@ -88,16 +146,31 @@ public class StudentDAO {
 
     public List<Student> getStudentsByStatus(ServletContext context, String examStatus) {
         List<Student> selectedStudents = new ArrayList<>();
-        String cleanStatus = FileUtil.clean(examStatus);
+        String cleanStatus = normalizeStatusInput(examStatus);
 
         if (cleanStatus.isEmpty()) {
             return selectedStudents;
         }
 
-        for (Student student : getAllStudents(context)) {
-            if (student.getExamStatus().equalsIgnoreCase(cleanStatus)) {
-                selectedStudents.add(student);
+        String sql = "SELECT student_id, name, email, course, batch, contact, exam_status " +
+                "FROM students " +
+                "WHERE LOWER(TRIM(exam_status)) = LOWER(TRIM(?)) " +
+                "ORDER BY name ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedStudents.add(mapResultSetToStudent(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> getStudentsByStatus failed for " + cleanStatus);
+            e.printStackTrace();
         }
 
         selectedStudents.sort(Comparator.comparing(Student::getName, String.CASE_INSENSITIVE_ORDER));
@@ -121,7 +194,21 @@ public class StudentDAO {
             return false;
         }
 
-        return FileUtil.appendLine(context, FILE_NAME, student.toFileString());
+        String sql = "INSERT INTO students " +
+                "(student_id, name, email, course, batch, contact, exam_status) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            fillStudentStatement(statement, student);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> addStudent failed");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean updateStudent(ServletContext context, Student student) {
@@ -129,12 +216,34 @@ public class StudentDAO {
             return false;
         }
 
-        return FileUtil.updateLineById(
-                context,
-                FILE_NAME,
-                student.getStudentId(),
-                student.toFileString()
-        );
+        String sql = "UPDATE students SET " +
+                "name = ?, " +
+                "email = ?, " +
+                "course = ?, " +
+                "batch = ?, " +
+                "contact = ?, " +
+                "exam_status = ? " +
+                "WHERE student_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, student.getName());
+            statement.setString(2, student.getEmail());
+            statement.setString(3, student.getCourse());
+            statement.setString(4, student.getBatch());
+            statement.setString(5, student.getContact());
+            statement.setString(6, student.getExamStatus());
+            statement.setString(7, student.getStudentId());
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> updateStudent failed for " +
+                    (student != null ? student.getStudentId() : ""));
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean deleteStudent(ServletContext context, String studentId) {
@@ -144,29 +253,61 @@ public class StudentDAO {
             return false;
         }
 
+        if (!existsById(context, cleanStudentId)) {
+            return false;
+        }
+
+        String sql = "DELETE FROM students WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> deleteStudent failed for " + cleanStudentId);
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateStudentStatus(ServletContext context, String studentId, String examStatus) {
+        String cleanStudentId = FileUtil.clean(studentId);
+        String cleanStatus = normalizeStatusInput(examStatus);
+
+        if (cleanStudentId.isEmpty() || cleanStatus.isEmpty()) {
+            return false;
+        }
+
         Student existingStudent = getStudentById(context, cleanStudentId);
 
         if (existingStudent == null) {
             return false;
         }
 
-        return FileUtil.deleteLineById(context, FILE_NAME, cleanStudentId);
-    }
+        existingStudent.setExamStatus(cleanStatus);
 
-    public boolean updateStudentStatus(ServletContext context, String studentId, String examStatus) {
-        Student student = getStudentById(context, studentId);
-
-        if (student == null) {
+        if (!existingStudent.isValidExamStatus()) {
             return false;
         }
 
-        student.setExamStatus(examStatus);
+        String sql = "UPDATE students SET exam_status = ? " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?))";
 
-        if (!student.isValidExamStatus()) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+            statement.setString(2, cleanStudentId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> updateStudentStatus failed for " + cleanStudentId);
+            e.printStackTrace();
             return false;
         }
-
-        return updateStudent(context, student);
     }
 
     public boolean markEligible(ServletContext context, String studentId) {
@@ -214,23 +355,30 @@ public class StudentDAO {
     }
 
     public int countAllStudents(ServletContext context) {
-        return getAllStudents(context).size();
+        return countByQuery("SELECT COUNT(*) FROM students");
     }
 
     public int countEligibleStudents(ServletContext context) {
-        return getEligibleStudents(context).size();
+        return countByStatus(context, Student.STATUS_ELIGIBLE);
     }
 
     public int countPendingStudents(ServletContext context) {
-        return getPendingStudents(context).size();
+        return countByStatus(context, Student.STATUS_PENDING);
     }
 
     public int countBlockedStudents(ServletContext context) {
-        return getBlockedStudents(context).size();
+        return countByStatus(context, Student.STATUS_BLOCKED);
     }
 
     public int countByBatch(ServletContext context, String batch) {
-        return getStudentsByBatch(context, batch).size();
+        String cleanBatch = normalizeBatchInput(batch);
+
+        if (cleanBatch.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) FROM students WHERE LOWER(TRIM(batch)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanBatch);
     }
 
     public int countYearOneStudents(ServletContext context) {
@@ -264,7 +412,29 @@ public class StudentDAO {
     }
 
     public boolean existsById(ServletContext context, String studentId) {
-        return FileUtil.existsById(context, FILE_NAME, studentId);
+        String cleanStudentId = FileUtil.clean(studentId);
+
+        if (cleanStudentId.isEmpty()) {
+            return false;
+        }
+
+        String sql = "SELECT student_id FROM students " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?)) LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> existsById failed for " + cleanStudentId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean existsByEmail(ServletContext context, String email) {
@@ -276,14 +446,10 @@ public class StudentDAO {
             return false;
         }
 
-        if (FileUtil.existsById(context, FILE_NAME, student.getStudentId())) {
+        if (existsById(context, student.getStudentId())) {
             return false;
         }
 
-        /*
-         * Professional rule:
-         * Avoid duplicate email records because email is a student identity field.
-         */
         return getStudentByEmail(context, student.getEmail()) == null;
     }
 
@@ -314,5 +480,135 @@ public class StudentDAO {
         }
 
         return student.isCompleteForSave();
+    }
+
+    private int countByStatus(ServletContext context, String status) {
+        String cleanStatus = normalizeStatusInput(status);
+
+        if (cleanStatus.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) FROM students WHERE LOWER(TRIM(exam_status)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanStatus);
+    }
+
+    private int countByQuery(String sql) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> countByQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private int countBySingleParameterQuery(String sql, String parameter) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, parameter);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("STUDENTDAO ERROR -> countBySingleParameterQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private void fillStudentStatement(PreparedStatement statement, Student student) throws SQLException {
+        statement.setString(1, student.getStudentId());
+        statement.setString(2, student.getName());
+        statement.setString(3, student.getEmail());
+        statement.setString(4, student.getCourse());
+        statement.setString(5, student.getBatch());
+        statement.setString(6, student.getContact());
+        statement.setString(7, student.getExamStatus());
+    }
+
+    private Student mapResultSetToStudent(ResultSet resultSet) throws SQLException {
+        return new Student(
+                safe(resultSet.getString("student_id")),
+                safe(resultSet.getString("name")),
+                safe(resultSet.getString("email")),
+                safe(resultSet.getString("course")),
+                normalizeBatchInput(resultSet.getString("batch")),
+                safe(resultSet.getString("contact")),
+                normalizeStatusInput(resultSet.getString("exam_status"))
+        );
+    }
+
+    private String normalizeBatchInput(String value) {
+        String batchValue = safe(value).toUpperCase();
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y1S1)) {
+            return Student.BATCH_Y1S1;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y1S2)) {
+            return Student.BATCH_Y1S2;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y2S1)) {
+            return Student.BATCH_Y2S1;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y2S2)) {
+            return Student.BATCH_Y2S2;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y3S1)) {
+            return Student.BATCH_Y3S1;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y3S2)) {
+            return Student.BATCH_Y3S2;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y4S1)) {
+            return Student.BATCH_Y4S1;
+        }
+
+        if (batchValue.equalsIgnoreCase(Student.BATCH_Y4S2)) {
+            return Student.BATCH_Y4S2;
+        }
+
+        return batchValue;
+    }
+
+    private String normalizeStatusInput(String value) {
+        String statusValue = safe(value);
+
+        if (statusValue.equalsIgnoreCase(Student.STATUS_ELIGIBLE)) {
+            return Student.STATUS_ELIGIBLE;
+        }
+
+        if (statusValue.equalsIgnoreCase(Student.STATUS_PENDING)) {
+            return Student.STATUS_PENDING;
+        }
+
+        if (statusValue.equalsIgnoreCase(Student.STATUS_BLOCKED)) {
+            return Student.STATUS_BLOCKED;
+        }
+
+        return statusValue;
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

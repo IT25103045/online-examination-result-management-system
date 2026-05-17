@@ -6,14 +6,6 @@ import java.sql.SQLException;
 
 /**
  * Central MySQL database connection helper for NextExamLK.
- *
- * Environment variables supported:
- * DATABASE_URL
- * DATABASE_USER
- * DATABASE_PASSWORD
- *
- * Local default:
- * jdbc:mysql://localhost:3306/nextexam_db
  */
 public class DBConnection {
 
@@ -21,9 +13,25 @@ public class DBConnection {
             "jdbc:mysql://localhost:3306/nextexam_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 
     private static final String DEFAULT_USER = "root";
+
+    /*
+     * Local testing only:
+     * Put your MySQL password here temporarily if environment variables are not working.
+     * Before GitHub push, change this back to "".
+     */
     private static final String DEFAULT_PASSWORD = "20031107Cp#";
 
     private DBConnection() {
+    }
+
+    static {
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            System.out.println("DBConnection -> MySQL JDBC driver loaded successfully");
+        } catch (ClassNotFoundException e) {
+            System.out.println("DBConnection ERROR -> MySQL JDBC driver not found");
+            e.printStackTrace();
+        }
     }
 
     public static Connection getConnection() throws SQLException {

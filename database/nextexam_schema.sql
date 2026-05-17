@@ -72,3 +72,10 @@ VALUES
     ('USR001', 'admin', 'admin123', 'admin@nextexam.lk', 'Admin', 'Active', ''),
     ('USR002', 'lecturer', 'lecturer123', 'lecturer@nextexam.lk', 'Lecturer', 'Active', ''),
     ('USR003', 'student', 'student123', 'student@nextexam.lk', 'Student', 'Active', '');
+
+INSERT IGNORE INTO students (student_id, name, email, course, batch, contact, exam_status)
+VALUES
+    ('USR003', 'Student User', 'student@nextexam.lk', 'Software Engineering', 'Y1S2', '0770000000', 'Eligible'),
+    ('ST001', 'Nimal Perera', 'nimal@nextexam.lk', 'Software Engineering', 'Y1S1', '0771111111', 'Eligible'),
+    ('ST002', 'Kavindi Silva', 'kavindi@nextexam.lk', 'Information Technology', 'Y2S1', '0772222222', 'Pending'),
+    ('ST003', 'Ruwan Fernando', 'ruwan@nextexam.lk', 'Computer Science', 'Y3S1', '0773333333', 'Blocked');
