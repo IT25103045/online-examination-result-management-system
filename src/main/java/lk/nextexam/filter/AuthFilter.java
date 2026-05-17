@@ -168,6 +168,8 @@ public class AuthFilter implements Filter {
      * Keep only safe non-management pages here.
      */
     private static final Set<String> COMMON_ROUTES = setOf(
+            "/dashboard.jsp",
+
             "/notices",
             "/notices/index.jsp",
             "/feedback",
