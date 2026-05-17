@@ -102,6 +102,18 @@ CREATE TABLE notifications (
      read_at DATETIME NULL,
      target_url VARCHAR(255) DEFAULT ''
 );
+
+CREATE TABLE IF NOT EXISTS notices (
+                                       notice_id VARCHAR(30) PRIMARY KEY,
+                                       title VARCHAR(180) NOT NULL,
+                                       description TEXT NOT NULL,
+                                       notice_date DATE NOT NULL,
+                                       target_group VARCHAR(30) NOT NULL,
+                                       priority VARCHAR(30) NOT NULL,
+                                       status VARCHAR(30) NOT NULL
+);
+
+
 INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
 VALUES
     ('USR001', 'admin', 'admin123', 'admin@nextexam.lk', 'Admin', 'Active', ''),
@@ -148,6 +160,12 @@ VALUES
     ('LOG002', 'USR001', 'Admin', 'MYSQL_MIGRATION', 'Database migration started.', '2026-05-17 20:10:00'),
     ('LOG003', 'USR003', 'Student', 'VIEW_EXAM', 'Student viewed available exams.', '2026-05-17 20:20:00');
 
+INSERT IGNORE INTO notices
+(notice_id, title, description, notice_date, target_group, priority, status)
+VALUES
+    ('NO001', 'Welcome to NextExamLK', 'Welcome to the online examination and result management platform.', '2026-05-17', 'All', 'Normal', 'Published'),
+    ('NO002', 'Upcoming OOP Exam', 'Object Oriented Programming exam is scheduled. Please check your exam dashboard.', '2026-05-20', 'Student', 'High', 'Published'),
+    ('NO003', 'Lecturer Marking Reminder', 'Please review pending essay submissions before publishing results.', '2026-05-21', 'Lecturer', 'Urgent', 'Published');
 
 
 
