@@ -1,6 +1,11 @@
 <%--
     Admin System Settings and Branding Panel.
 
+    Safe version:
+    - Avoids direct SystemSettingDAO import/constants in JSP
+    - Avoids duplicate appName variable conflict with includes/head.jsp
+    - Uses settingAppName instead of appName
+
     Responsible Member:
     IT25103045 - De Silva H.L.D.C.P.C
 --%>
@@ -8,30 +13,76 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%@ page import="java.util.Map" %>
+<%@ page import="java.util.HashMap" %>
 <%@ page import="lk.nextexam.dao.FileUtil" %>
-<%@ page import="lk.nextexam.dao.SystemSettingDAO" %>
 
 <%
     String pageTitle = "System Settings";
     String activeMenu = "settings";
     String topbarTitle = "System Settings";
 
-    Map<String, String> settingsMap = (Map<String, String>) request.getAttribute("settingsMap");
+    Map<String, String> settingsMap = null;
 
-    if (settingsMap == null) {
-        settingsMap = new SystemSettingDAO().getSettingsMap(application);
+    try {
+        settingsMap = (Map<String, String>) request.getAttribute("settingsMap");
+    } catch (Exception e) {
+        settingsMap = null;
     }
 
-    String appName = settingsMap.get(SystemSettingDAO.KEY_APP_NAME);
-    String institutionName = settingsMap.get(SystemSettingDAO.KEY_INSTITUTION_NAME);
-    String academicYear = settingsMap.get(SystemSettingDAO.KEY_ACADEMIC_YEAR);
-    String semester = settingsMap.get(SystemSettingDAO.KEY_SEMESTER);
-    String supportEmail = settingsMap.get(SystemSettingDAO.KEY_SUPPORT_EMAIL);
-    String supportPhone = settingsMap.get(SystemSettingDAO.KEY_SUPPORT_PHONE);
-    String footerText = settingsMap.get(SystemSettingDAO.KEY_FOOTER_TEXT);
-    String systemStatus = settingsMap.get(SystemSettingDAO.KEY_SYSTEM_STATUS);
-    String defaultExamNote = settingsMap.get(SystemSettingDAO.KEY_DEFAULT_EXAM_NOTE);
-    String helpDeskMessage = settingsMap.get(SystemSettingDAO.KEY_HELP_DESK_MESSAGE);
+    if (settingsMap == null) {
+        settingsMap = new HashMap<String, String>();
+    }
+
+    String settingAppName = settingsMap.get("appName");
+    String institutionName = settingsMap.get("institutionName");
+    String academicYear = settingsMap.get("academicYear");
+    String semester = settingsMap.get("semester");
+    String supportEmail = settingsMap.get("supportEmail");
+    String supportPhone = settingsMap.get("supportPhone");
+    String footerText = settingsMap.get("footerText");
+    String systemStatus = settingsMap.get("systemStatus");
+    String defaultExamNote = settingsMap.get("defaultExamNote");
+    String helpDeskMessage = settingsMap.get("helpDeskMessage");
+
+    if (settingAppName == null || settingAppName.trim().isEmpty()) {
+        settingAppName = "NextExamLK";
+    }
+
+    if (institutionName == null || institutionName.trim().isEmpty()) {
+        institutionName = "Sri Lanka Institute of Information Technology";
+    }
+
+    if (academicYear == null || academicYear.trim().isEmpty()) {
+        academicYear = "2026";
+    }
+
+    if (semester == null || semester.trim().isEmpty()) {
+        semester = "Year 1 Semester 2";
+    }
+
+    if (supportEmail == null || supportEmail.trim().isEmpty()) {
+        supportEmail = "support@nextexam.lk";
+    }
+
+    if (supportPhone == null || supportPhone.trim().isEmpty()) {
+        supportPhone = "+94 77 000 0000";
+    }
+
+    if (footerText == null || footerText.trim().isEmpty()) {
+        footerText = "Secure Online Examination and Result Management Platform";
+    }
+
+    if (systemStatus == null || systemStatus.trim().isEmpty()) {
+        systemStatus = "Online";
+    }
+
+    if (defaultExamNote == null || defaultExamNote.trim().isEmpty()) {
+        defaultExamNote = "Please read all exam rules carefully before starting the examination.";
+    }
+
+    if (helpDeskMessage == null || helpDeskMessage.trim().isEmpty()) {
+        helpDeskMessage = "Contact the academic support team if you face login, exam, result, or document issues.";
+    }
 
     String success = request.getParameter("success");
     String error = request.getParameter("error");
@@ -108,28 +159,35 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Application Name <span class="required">*</span></label>
+                                    <label class="form-label">
+                                        Application Name <span class="required">*</span>
+                                    </label>
+
                                     <input type="text"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_APP_NAME %>"
-                                           value="<%= FileUtil.h(appName) %>"
+                                           name="appName"
+                                           value="<%= FileUtil.h(settingAppName) %>"
                                            required>
                                 </div>
 
                                 <div class="col-md-6">
-                                    <label class="form-label">Institution Name <span class="required">*</span></label>
+                                    <label class="form-label">
+                                        Institution Name <span class="required">*</span>
+                                    </label>
+
                                     <input type="text"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_INSTITUTION_NAME %>"
+                                           name="institutionName"
                                            value="<%= FileUtil.h(institutionName) %>"
                                            required>
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label">Footer Branding Text</label>
+
                                     <input type="text"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_FOOTER_TEXT %>"
+                                           name="footerText"
                                            value="<%= FileUtil.h(footerText) %>">
                                 </div>
                             </div>
@@ -148,25 +206,28 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label">Academic Year</label>
+
                                     <input type="text"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_ACADEMIC_YEAR %>"
+                                           name="academicYear"
                                            value="<%= FileUtil.h(academicYear) %>">
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">Semester</label>
+
                                     <input type="text"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_SEMESTER %>"
+                                           name="semester"
                                            value="<%= FileUtil.h(semester) %>">
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label">Default Exam Note</label>
+
                                     <textarea class="form-control"
                                               rows="3"
-                                              name="<%= SystemSettingDAO.KEY_DEFAULT_EXAM_NOTE %>"><%= FileUtil.h(defaultExamNote) %></textarea>
+                                              name="defaultExamNote"><%= FileUtil.h(defaultExamNote) %></textarea>
                                 </div>
                             </div>
                         </div>
@@ -183,36 +244,50 @@
 
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label class="form-label">Support Email <span class="required">*</span></label>
+                                    <label class="form-label">
+                                        Support Email <span class="required">*</span>
+                                    </label>
+
                                     <input type="email"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_SUPPORT_EMAIL %>"
+                                           name="supportEmail"
                                            value="<%= FileUtil.h(supportEmail) %>"
                                            required>
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">Support Phone</label>
+
                                     <input type="text"
                                            class="form-control"
-                                           name="<%= SystemSettingDAO.KEY_SUPPORT_PHONE %>"
+                                           name="supportPhone"
                                            value="<%= FileUtil.h(supportPhone) %>">
                                 </div>
 
                                 <div class="col-md-6">
                                     <label class="form-label">System Status</label>
-                                    <select class="form-select" name="<%= SystemSettingDAO.KEY_SYSTEM_STATUS %>">
-                                        <option value="Online" <%= "Online".equalsIgnoreCase(systemStatus) ? "selected" : "" %>>Online</option>
-                                        <option value="Maintenance" <%= "Maintenance".equalsIgnoreCase(systemStatus) ? "selected" : "" %>>Maintenance</option>
-                                        <option value="Limited Access" <%= "Limited Access".equalsIgnoreCase(systemStatus) ? "selected" : "" %>>Limited Access</option>
+
+                                    <select class="form-select" name="systemStatus">
+                                        <option value="Online" <%= "Online".equalsIgnoreCase(systemStatus) ? "selected" : "" %>>
+                                            Online
+                                        </option>
+
+                                        <option value="Maintenance" <%= "Maintenance".equalsIgnoreCase(systemStatus) ? "selected" : "" %>>
+                                            Maintenance
+                                        </option>
+
+                                        <option value="Limited Access" <%= "Limited Access".equalsIgnoreCase(systemStatus) ? "selected" : "" %>>
+                                            Limited Access
+                                        </option>
                                     </select>
                                 </div>
 
                                 <div class="col-12">
                                     <label class="form-label">Help Desk Message</label>
+
                                     <textarea class="form-control"
                                               rows="3"
-                                              name="<%= SystemSettingDAO.KEY_HELP_DESK_MESSAGE %>"><%= FileUtil.h(helpDeskMessage) %></textarea>
+                                              name="helpDeskMessage"><%= FileUtil.h(helpDeskMessage) %></textarea>
                                 </div>
                             </div>
                         </div>
@@ -243,7 +318,7 @@
                             </div>
 
                             <div>
-                                <h3><%= FileUtil.h(appName) %></h3>
+                                <h3><%= FileUtil.h(settingAppName) %></h3>
                                 <p><%= FileUtil.h(institutionName) %></p>
                             </div>
                         </div>
