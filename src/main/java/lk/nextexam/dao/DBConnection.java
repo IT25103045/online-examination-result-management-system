@@ -19,7 +19,7 @@ public class DBConnection {
      * Put your MySQL password here temporarily if environment variables are not working.
      * Before GitHub push, change this back to "".
      */
-    private static final String DEFAULT_PASSWORD = "20031107Cp#";
+    private static final String DEFAULT_PASSWORD = "";
 
     private DBConnection() {
     }
