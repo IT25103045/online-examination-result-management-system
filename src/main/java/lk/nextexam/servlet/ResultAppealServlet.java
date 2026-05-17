@@ -6,9 +6,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lk.nextexam.dao.AuditLogDAO;
 import lk.nextexam.dao.FileUtil;
 import lk.nextexam.dao.ResultAppealDAO;
 import lk.nextexam.dao.ResultDAO;
+import lk.nextexam.model.AuditLog;
 import lk.nextexam.model.Result;
 import lk.nextexam.model.ResultAppeal;
 import lk.nextexam.model.User;
@@ -16,7 +18,6 @@ import lk.nextexam.model.User;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 /**
  * ResultAppealServlet controls student result recheck requests
@@ -24,6 +25,12 @@ import java.util.List;
  *
  * URL:
  * /result-appeals
+ *
+ * Audit Logging:
+ * - Student appeal creation
+ * - Staff appeal update
+ * - Access denied attempts
+ * - Validation failures
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
@@ -39,6 +46,7 @@ public class ResultAppealServlet extends HttpServlet {
 
     private final ResultAppealDAO appealDAO = new ResultAppealDAO();
     private final ResultDAO resultDAO = new ResultDAO();
+    private final AuditLogDAO auditLogDAO = new AuditLogDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -49,6 +57,15 @@ public class ResultAppealServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (!isAuthenticated(session)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Unauthenticated user attempted to access result appeals page.",
+                    AuditLog.STATUS_DENIED
+            );
+
             response.sendRedirect(request.getContextPath() + "/login.jsp?error=sessionExpired");
             return;
         }
@@ -69,6 +86,15 @@ public class ResultAppealServlet extends HttpServlet {
             request.setAttribute("isStaff", false);
             request.setAttribute("isStudent", true);
         } else {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Unsupported role attempted to access result appeals page.",
+                    AuditLog.STATUS_DENIED
+            );
+
             response.sendRedirect(request.getContextPath() + "/login.jsp?error=accessDenied");
             return;
         }
@@ -90,6 +116,15 @@ public class ResultAppealServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (!isAuthenticated(session)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Unauthenticated user attempted to submit result appeal action.",
+                    AuditLog.STATUS_DENIED
+            );
+
             response.sendRedirect(request.getContextPath() + "/login.jsp?error=sessionExpired");
             return;
         }
@@ -106,6 +141,15 @@ public class ResultAppealServlet extends HttpServlet {
             return;
         }
 
+        auditLogDAO.logAction(
+                getServletContext(),
+                request,
+                "INVALID_ACTION",
+                AuditLog.MODULE_RESULT_APPEALS,
+                "Invalid result appeal action submitted: " + action + ".",
+                AuditLog.STATUS_WARNING
+        );
+
         redirectToAppeals(request, response, "error", "invalidAction");
     }
 
@@ -117,6 +161,15 @@ public class ResultAppealServlet extends HttpServlet {
         String role = getSessionValue(session, "userRole");
 
         if (!User.ROLE_STUDENT.equalsIgnoreCase(role)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Non-student user attempted to create a result appeal.",
+                    AuditLog.STATUS_DENIED
+            );
+
             redirectToAppeals(request, response, "error", "accessDenied");
             return;
         }
@@ -128,11 +181,29 @@ public class ResultAppealServlet extends HttpServlet {
         String message = FileUtil.clean(request.getParameter("message"));
 
         if (resultId.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Result appeal creation failed because result ID was missing.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "missingResultId");
             return;
         }
 
         if (reasonType.isEmpty() || message.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Result appeal creation failed for result " + resultId + " because appeal details were missing.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "missingAppealDetails");
             return;
         }
@@ -140,21 +211,57 @@ public class ResultAppealServlet extends HttpServlet {
         Result result = resultDAO.getResultById(getServletContext(), resultId);
 
         if (result == null) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Result appeal creation failed because result " + resultId + " was not found.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "resultNotFound");
             return;
         }
 
         if (!result.getStudentId().equalsIgnoreCase(studentId)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Student " + studentId + " attempted to appeal another student's result " + resultId + ".",
+                    AuditLog.STATUS_DENIED
+            );
+
             redirectToAppeals(request, response, "error", "accessDenied");
             return;
         }
 
         if (!result.isPublished()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Result appeal creation failed because result " + resultId + " is not published.",
+                    AuditLog.STATUS_WARNING
+            );
+
             redirectToAppeals(request, response, "error", "resultNotPublished");
             return;
         }
 
         if (appealDAO.hasStudentAppealedResult(getServletContext(), studentId, resultId)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Duplicate appeal blocked for student " + studentId + " and result " + resultId + ".",
+                    AuditLog.STATUS_WARNING
+            );
+
             redirectToAppeals(request, response, "error", "appealAlreadyExists");
             return;
         }
@@ -179,8 +286,28 @@ public class ResultAppealServlet extends HttpServlet {
         boolean saved = appealDAO.addAppeal(getServletContext(), appeal);
 
         if (saved) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Student submitted result appeal " + appeal.getAppealId()
+                            + " for result " + resultId
+                            + " with reason type " + reasonType + ".",
+                    AuditLog.STATUS_SUCCESS
+            );
+
             redirectToAppeals(request, response, "success", "appealSubmitted");
         } else {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "CREATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Result appeal save failed for result " + resultId + ".",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "appealSaveFailed");
         }
     }
@@ -193,6 +320,15 @@ public class ResultAppealServlet extends HttpServlet {
         String role = getSessionValue(session, "userRole");
 
         if (!isStaffRole(role)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Non-staff user attempted to update a result appeal.",
+                    AuditLog.STATUS_DENIED
+            );
+
             redirectToAppeals(request, response, "error", "accessDenied");
             return;
         }
@@ -203,6 +339,15 @@ public class ResultAppealServlet extends HttpServlet {
         String reviewedBy = getStaffDisplayName(session);
 
         if (appealId.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "UPDATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Appeal update failed because appeal ID was missing.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "missingAppealId");
             return;
         }
@@ -210,11 +355,29 @@ public class ResultAppealServlet extends HttpServlet {
         ResultAppeal appeal = appealDAO.getAppealById(getServletContext(), appealId);
 
         if (appeal == null) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "UPDATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Appeal update failed because appeal " + appealId + " was not found.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "appealNotFound");
             return;
         }
 
         if (status.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "UPDATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Appeal update failed because status was missing for appeal " + appealId + ".",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "missingStatus");
             return;
         }
@@ -225,6 +388,15 @@ public class ResultAppealServlet extends HttpServlet {
         appeal.setUpdatedAt(appealDAO.now());
 
         if (!appeal.isValidStatus()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "UPDATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Appeal update failed because invalid status was provided for appeal " + appealId + ": " + status + ".",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "invalidStatus");
             return;
         }
@@ -232,8 +404,28 @@ public class ResultAppealServlet extends HttpServlet {
         boolean updated = appealDAO.updateAppeal(getServletContext(), appeal);
 
         if (updated) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "UPDATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Staff updated appeal " + appealId
+                            + " to status " + appeal.getStatus()
+                            + ". Reviewed by " + reviewedBy + ".",
+                    AuditLog.STATUS_SUCCESS
+            );
+
             redirectToAppeals(request, response, "success", "appealUpdated");
         } else {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "UPDATE_APPEAL",
+                    AuditLog.MODULE_RESULT_APPEALS,
+                    "Appeal update failed while saving appeal " + appealId + ".",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToAppeals(request, response, "error", "appealUpdateFailed");
         }
     }
