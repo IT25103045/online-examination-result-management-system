@@ -5,11 +5,10 @@ CREATE TABLE IF NOT EXISTS users (
                                      user_id VARCHAR(30) PRIMARY KEY,
     username VARCHAR(80) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
+    email VARCHAR(120) NOT NULL UNIQUE,
     role VARCHAR(30) NOT NULL,
-    display_name VARCHAR(120),
-    email VARCHAR(120),
-    status VARCHAR(30) DEFAULT 'Active',
-    profile_image VARCHAR(255)
+    status VARCHAR(30) NOT NULL DEFAULT 'Active',
+    profile_image VARCHAR(255) DEFAULT ''
     );
 
 CREATE TABLE IF NOT EXISTS students (
@@ -67,3 +66,9 @@ CREATE TABLE IF NOT EXISTS results (
     verification VARCHAR(30) NOT NULL,
     published VARCHAR(30) NOT NULL
     );
+
+INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
+VALUES
+    ('USR001', 'admin', 'admin123', 'admin@nextexam.lk', 'Admin', 'Active', ''),
+    ('USR002', 'lecturer', 'lecturer123', 'lecturer@nextexam.lk', 'Lecturer', 'Active', ''),
+    ('USR003', 'student', 'student123', 'student@nextexam.lk', 'Student', 'Active', '');

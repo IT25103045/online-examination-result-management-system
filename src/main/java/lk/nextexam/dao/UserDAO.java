@@ -3,34 +3,45 @@ package lk.nextexam.dao;
 import jakarta.servlet.ServletContext;
 import lk.nextexam.model.User;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * UserDAO manages user-related file handling operations.
+ * UserDAO manages user-related MySQL database operations.
  *
- * This class is responsible for reading, writing, searching, updating,
- * and deleting user records from the user data file. It separates data
- * access logic from servlet and JSP code.
+ * MySQL table:
+ * users
+ *
+ * Columns:
+ * user_id, username, password, email, role, status, profile_image
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class UserDAO {
 
-    private static final String FILE_NAME = "users.txt";
-
     public List<User> getAllUsers(ServletContext context) {
         List<User> users = new ArrayList<>();
-        List<String> lines = FileUtil.readLines(context, FILE_NAME);
 
-        for (String line : lines) {
-            User user = User.fromFileString(line);
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users " +
+                "ORDER BY role ASC, user_id ASC";
 
-            if (user != null && !user.getUserId().isEmpty()) {
-                users.add(user);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                users.add(mapResultSetToUser(resultSet));
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         users.sort(
@@ -48,10 +59,22 @@ public class UserDAO {
             return null;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getUserId().equalsIgnoreCase(cleanUserId)) {
-                return user;
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users WHERE LOWER(user_id) = LOWER(?) LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanUserId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToUser(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -64,10 +87,22 @@ public class UserDAO {
             return null;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getUsername().equalsIgnoreCase(cleanUsername)) {
-                return user;
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanUsername);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToUser(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -80,10 +115,22 @@ public class UserDAO {
             return null;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getEmail().equalsIgnoreCase(cleanEmail)) {
-                return user;
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanEmail);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToUser(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -96,13 +143,25 @@ public class UserDAO {
             return null;
         }
 
-        for (User user : getAllUsers(context)) {
-            boolean usernameMatches = user.getUsername().equalsIgnoreCase(value);
-            boolean emailMatches = user.getEmail().equalsIgnoreCase(value);
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users " +
+                "WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) " +
+                "LIMIT 1";
 
-            if (usernameMatches || emailMatches) {
-                return user;
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, value);
+            statement.setString(2, value);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToUser(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -116,10 +175,22 @@ public class UserDAO {
             return selectedUsers;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getRole().equalsIgnoreCase(cleanRole)) {
-                selectedUsers.add(user);
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users WHERE LOWER(role) = LOWER(?) ORDER BY user_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanRole);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedUsers.add(mapResultSetToUser(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         selectedUsers.sort(Comparator.comparing(User::getUserId, String.CASE_INSENSITIVE_ORDER));
@@ -134,10 +205,22 @@ public class UserDAO {
             return selectedUsers;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getStatus().equalsIgnoreCase(cleanStatus)) {
-                selectedUsers.add(user);
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users WHERE LOWER(status) = LOWER(?) ORDER BY user_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedUsers.add(mapResultSetToUser(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         selectedUsers.sort(Comparator.comparing(User::getUserId, String.CASE_INSENSITIVE_ORDER));
@@ -145,33 +228,49 @@ public class UserDAO {
     }
 
     public List<User> getActiveStudents(ServletContext context) {
-        List<User> students = new ArrayList<>();
-
-        for (User user : getAllUsers(context)) {
-            if (user.isStudent() && user.isActive()) {
-                students.add(user);
-            }
-        }
-
-        students.sort(Comparator.comparing(User::getUserId, String.CASE_INSENSITIVE_ORDER));
-        return students;
+        return getActiveUsersByRole(User.ROLE_STUDENT);
     }
 
     public List<User> getActiveLecturers(ServletContext context) {
-        List<User> lecturers = new ArrayList<>();
+        return getActiveUsersByRole(User.ROLE_LECTURER);
+    }
 
-        for (User user : getAllUsers(context)) {
-            if (user.isLecturer() && user.isActive()) {
-                lecturers.add(user);
+    private List<User> getActiveUsersByRole(String role) {
+        List<User> users = new ArrayList<>();
+
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users " +
+                "WHERE LOWER(role) = LOWER(?) AND LOWER(status) = LOWER(?) " +
+                "ORDER BY user_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, role);
+            statement.setString(2, User.STATUS_ACTIVE);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    users.add(mapResultSetToUser(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        lecturers.sort(Comparator.comparing(User::getUserId, String.CASE_INSENSITIVE_ORDER));
-        return lecturers;
+        users.sort(Comparator.comparing(User::getUserId, String.CASE_INSENSITIVE_ORDER));
+        return users;
     }
 
     /**
      * Authenticates a user by username/email + password + role.
+     *
+     * Current compatibility:
+     * - Plain text passwords still work.
+     *
+     * Future:
+     * - Add BCrypt and verify hashed passwords inside verifyPassword().
      */
     public User login(ServletContext context, String usernameOrEmail, String password, String role) {
         String cleanUsernameOrEmail = FileUtil.clean(usernameOrEmail);
@@ -182,42 +281,91 @@ public class UserDAO {
             return null;
         }
 
-        for (User user : getAllUsers(context)) {
-            boolean identityMatches = user.getUsername().equalsIgnoreCase(cleanUsernameOrEmail)
-                    || user.getEmail().equalsIgnoreCase(cleanUsernameOrEmail);
+        String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
+                "FROM users " +
+                "WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)) " +
+                "AND LOWER(role) = LOWER(?) " +
+                "LIMIT 1";
 
-            boolean roleMatches = user.getRole().equalsIgnoreCase(cleanRole);
-            boolean active = user.canLogin();
-            boolean passwordMatches = verifyPassword(cleanPassword, user.getPassword());
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
 
-            if (identityMatches && roleMatches && active && passwordMatches) {
-                return user;
+            statement.setString(1, cleanUsernameOrEmail);
+            statement.setString(2, cleanUsernameOrEmail);
+            statement.setString(3, cleanRole);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    User user = mapResultSetToUser(resultSet);
+
+                    boolean active = user.canLogin();
+                    boolean passwordMatches = verifyPassword(cleanPassword, user.getPassword());
+
+                    if (active && passwordMatches) {
+                        return user;
+                    }
+                }
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
         return null;
     }
 
-    /**
-     * Adds a user after validation and duplicate checks.
-     */
     public boolean addUser(ServletContext context, User user) {
         if (!isValidForCreate(context, user)) {
             return false;
         }
 
-        return FileUtil.appendLine(context, FILE_NAME, user.toFileString());
+        String sql = "INSERT INTO users " +
+                "(user_id, username, password, email, role, status, profile_image) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            fillUserStatement(statement, user);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
-    /**
-     * Updates a user after validation and duplicate checks.
-     */
     public boolean updateUser(ServletContext context, User user) {
         if (!isValidForUpdate(context, user)) {
             return false;
         }
 
-        return FileUtil.updateLineById(context, FILE_NAME, user.getUserId(), user.toFileString());
+        String sql = "UPDATE users SET " +
+                "username = ?, " +
+                "password = ?, " +
+                "email = ?, " +
+                "role = ?, " +
+                "status = ?, " +
+                "profile_image = ? " +
+                "WHERE user_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, user.getUsername());
+            statement.setString(2, user.getPassword());
+            statement.setString(3, user.getEmail());
+            statement.setString(4, user.getRole());
+            statement.setString(5, user.getStatus());
+            statement.setString(6, user.getProfileImage());
+            statement.setString(7, user.getUserId());
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean deleteUser(ServletContext context, String userId) {
@@ -227,40 +375,54 @@ public class UserDAO {
             return false;
         }
 
-        return FileUtil.deleteLineById(context, FILE_NAME, cleanUserId);
+        String sql = "DELETE FROM users WHERE user_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanUserId);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean activateUser(ServletContext context, String userId) {
-        User user = getUserById(context, userId);
-
-        if (user == null) {
-            return false;
-        }
-
-        user.setStatus(User.STATUS_ACTIVE);
-        return updateUser(context, user);
+        return updateUserStatus(userId, User.STATUS_ACTIVE);
     }
 
     public boolean deactivateUser(ServletContext context, String userId) {
-        User user = getUserById(context, userId);
-
-        if (user == null) {
-            return false;
-        }
-
-        user.setStatus(User.STATUS_INACTIVE);
-        return updateUser(context, user);
+        return updateUserStatus(userId, User.STATUS_INACTIVE);
     }
 
     public boolean suspendUser(ServletContext context, String userId) {
-        User user = getUserById(context, userId);
+        return updateUserStatus(userId, User.STATUS_SUSPENDED);
+    }
 
-        if (user == null) {
+    private boolean updateUserStatus(String userId, String status) {
+        String cleanUserId = FileUtil.clean(userId);
+        String cleanStatus = FileUtil.clean(status);
+
+        if (cleanUserId.isEmpty() || cleanStatus.isEmpty()) {
             return false;
         }
 
-        user.setStatus(User.STATUS_SUSPENDED);
-        return updateUser(context, user);
+        String sql = "UPDATE users SET status = ? WHERE user_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStatus);
+            statement.setString(2, cleanUserId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean isUsernameOrEmailTaken(ServletContext context,
@@ -276,32 +438,54 @@ public class UserDAO {
             return false;
         }
 
-        for (User existingUser : getAllUsers(context)) {
-            if (!cleanCurrentUserId.isEmpty()
-                    && existingUser.getUserId().equalsIgnoreCase(cleanCurrentUserId)) {
-                continue;
+        String sql = "SELECT user_id FROM users " +
+                "WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)) " +
+                "AND LOWER(user_id) <> LOWER(?) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanUsername);
+            statement.setString(2, cleanEmail);
+            statement.setString(3, cleanCurrentUserId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
             }
 
-            boolean sameUsername = !cleanUsername.isEmpty()
-                    && existingUser.getUsername().equalsIgnoreCase(cleanUsername);
-
-            boolean sameEmail = !cleanEmail.isEmpty()
-                    && existingUser.getEmail().equalsIgnoreCase(cleanEmail);
-
-            if (sameUsername || sameEmail) {
-                return true;
-            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return true;
         }
-
-        return false;
     }
 
     public boolean existsById(ServletContext context, String userId) {
-        return FileUtil.existsById(context, FILE_NAME, userId);
+        String cleanUserId = FileUtil.clean(userId);
+
+        if (cleanUserId.isEmpty()) {
+            return false;
+        }
+
+        String sql = "SELECT user_id FROM users WHERE LOWER(user_id) = LOWER(?) LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanUserId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public int countAllUsers(ServletContext context) {
-        return getAllUsers(context).size();
+        return countByQuery("SELECT COUNT(*) FROM users");
     }
 
     public int countActiveUsers(ServletContext context) {
@@ -329,37 +513,84 @@ public class UserDAO {
     }
 
     public int countByRole(ServletContext context, String role) {
-        int count = 0;
         String cleanRole = FileUtil.clean(role);
 
         if (cleanRole.isEmpty()) {
-            return count;
+            return 0;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getRole().equalsIgnoreCase(cleanRole)) {
-                count++;
-            }
-        }
-
-        return count;
+        String sql = "SELECT COUNT(*) FROM users WHERE LOWER(role) = LOWER(?)";
+        return countBySingleParameterQuery(sql, cleanRole);
     }
 
     public int countByStatus(ServletContext context, String status) {
-        int count = 0;
         String cleanStatus = FileUtil.clean(status);
 
         if (cleanStatus.isEmpty()) {
-            return count;
+            return 0;
         }
 
-        for (User user : getAllUsers(context)) {
-            if (user.getStatus().equalsIgnoreCase(cleanStatus)) {
-                count++;
+        String sql = "SELECT COUNT(*) FROM users WHERE LOWER(status) = LOWER(?)";
+        return countBySingleParameterQuery(sql, cleanStatus);
+    }
+
+    public boolean updateProfileImage(ServletContext context, String userId, String profileImagePath) {
+        String cleanUserId = FileUtil.clean(userId);
+        String cleanProfileImagePath = FileUtil.clean(profileImagePath);
+
+        if (cleanUserId.isEmpty()) {
+            return false;
+        }
+
+        String sql = "UPDATE users SET profile_image = ? WHERE user_id = ?";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanProfileImagePath);
+            statement.setString(2, cleanUserId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private int countByQuery(String sql) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
             }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
 
-        return count;
+        return 0;
+    }
+
+    private int countBySingleParameterQuery(String sql, String parameter) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, parameter);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return 0;
     }
 
     private boolean isValidForCreate(ServletContext context, User user) {
@@ -367,7 +598,7 @@ public class UserDAO {
             return false;
         }
 
-        if (FileUtil.existsById(context, FILE_NAME, user.getUserId())) {
+        if (existsById(context, user.getUserId())) {
             return false;
         }
 
@@ -379,7 +610,7 @@ public class UserDAO {
             return false;
         }
 
-        if (!FileUtil.existsById(context, FILE_NAME, user.getUserId())) {
+        if (!existsById(context, user.getUserId())) {
             return false;
         }
 
@@ -407,26 +638,27 @@ public class UserDAO {
 
         return cleanEmail.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
     }
-    /**
-     * Updates only the profile image path of a user.
-     */
-    public boolean updateProfileImage(ServletContext context, String userId, String profileImagePath) {
-        String cleanUserId = FileUtil.clean(userId);
-        String cleanProfileImagePath = FileUtil.clean(profileImagePath);
 
-        if (cleanUserId.isEmpty()) {
-            return false;
-        }
+    private void fillUserStatement(PreparedStatement statement, User user) throws SQLException {
+        statement.setString(1, user.getUserId());
+        statement.setString(2, user.getUsername());
+        statement.setString(3, user.getPassword());
+        statement.setString(4, user.getEmail());
+        statement.setString(5, user.getRole());
+        statement.setString(6, user.getStatus());
+        statement.setString(7, user.getProfileImage());
+    }
 
-        User user = getUserById(context, cleanUserId);
-
-        if (user == null) {
-            return false;
-        }
-
-        user.setProfileImage(cleanProfileImagePath);
-
-        return updateUser(context, user);
+    private User mapResultSetToUser(ResultSet resultSet) throws SQLException {
+        return new User(
+                safe(resultSet.getString("user_id")),
+                safe(resultSet.getString("username")),
+                safe(resultSet.getString("password")),
+                safe(resultSet.getString("email")),
+                safe(resultSet.getString("role")),
+                safe(resultSet.getString("status")),
+                safe(resultSet.getString("profile_image"))
+        );
     }
 
     /**
@@ -459,5 +691,9 @@ public class UserDAO {
          */
 
         return stored.equals(raw);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }
