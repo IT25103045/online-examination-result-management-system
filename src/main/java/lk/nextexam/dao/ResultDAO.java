@@ -3,33 +3,46 @@ package lk.nextexam.dao;
 import jakarta.servlet.ServletContext;
 import lk.nextexam.model.Result;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
 /**
- * Professional DAO for result management.
+ * Professional MySQL DAO for result management.
  *
- * Storage file:
- * results.txt
+ * MySQL table:
+ * results
  *
- * Format:
- * resultId|studentId|examId|marks|grade|status|verification|published
+ * Columns:
+ * result_id, student_id, exam_id, marks, grade, status, verification, published
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class ResultDAO {
 
-    private static final String FILE_NAME = "results.txt";
-
     public List<Result> getAllResults(ServletContext context) {
         List<Result> results = new ArrayList<>();
-        List<String> lines = FileUtil.readLines(context, FILE_NAME);
 
-        for (String line : lines) {
-            Result result = Result.fromFileString(line);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "ORDER BY result_id ASC";
 
-            if (result != null && !result.getResultId().isEmpty()) {
-                results.add(result);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            while (resultSet.next()) {
+                results.add(mapResultSetToResult(resultSet));
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getAllResults failed");
+            e.printStackTrace();
         }
 
         results.sort(Comparator.comparing(Result::getResultId, String.CASE_INSENSITIVE_ORDER));
@@ -43,10 +56,25 @@ public class ResultDAO {
             return null;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getResultId().equalsIgnoreCase(cleanResultId)) {
-                return result;
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanResultId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToResult(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getResultById failed for " + cleanResultId);
+            e.printStackTrace();
         }
 
         return null;
@@ -60,10 +88,25 @@ public class ResultDAO {
             return selectedResults;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getStudentId().equalsIgnoreCase(cleanStudentId)) {
-                selectedResults.add(result);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?)) " +
+                "ORDER BY exam_id ASC, result_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedResults.add(mapResultSetToResult(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getResultsByStudentId failed for " + cleanStudentId);
+            e.printStackTrace();
         }
 
         selectedResults.sort(Comparator.comparing(Result::getExamId, String.CASE_INSENSITIVE_ORDER));
@@ -78,10 +121,25 @@ public class ResultDAO {
             return selectedResults;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getExamId().equalsIgnoreCase(cleanExamId)) {
-                selectedResults.add(result);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?)) " +
+                "ORDER BY student_id ASC, result_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanExamId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedResults.add(mapResultSetToResult(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getResultsByExamId failed for " + cleanExamId);
+            e.printStackTrace();
         }
 
         selectedResults.sort(Comparator.comparing(Result::getStudentId, String.CASE_INSENSITIVE_ORDER));
@@ -96,13 +154,27 @@ public class ResultDAO {
             return null;
         }
 
-        for (Result result : getAllResults(context)) {
-            boolean sameStudent = result.getStudentId().equalsIgnoreCase(cleanStudentId);
-            boolean sameExam = result.getExamId().equalsIgnoreCase(cleanExamId);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?)) " +
+                "AND LOWER(TRIM(exam_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
 
-            if (sameStudent && sameExam) {
-                return result;
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+            statement.setString(2, cleanExamId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return mapResultSetToResult(resultSet);
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getResultByStudentAndExam failed");
+            e.printStackTrace();
         }
 
         return null;
@@ -116,10 +188,27 @@ public class ResultDAO {
             return selectedResults;
         }
 
-        for (Result result : getResultsByStudentId(context, cleanStudentId)) {
-            if (result.isPublished()) {
-                selectedResults.add(result);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(student_id)) = LOWER(TRIM(?)) " +
+                "AND LOWER(TRIM(published)) = LOWER(TRIM(?)) " +
+                "ORDER BY exam_id ASC, result_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanStudentId);
+            statement.setString(2, Result.PUBLISHED_YES);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedResults.add(mapResultSetToResult(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getPublishedResultsByStudentId failed for " + cleanStudentId);
+            e.printStackTrace();
         }
 
         selectedResults.sort(Comparator.comparing(Result::getExamId, String.CASE_INSENSITIVE_ORDER));
@@ -128,16 +217,31 @@ public class ResultDAO {
 
     public List<Result> getResultsByVerification(ServletContext context, String verification) {
         List<Result> selectedResults = new ArrayList<>();
-        String cleanVerification = FileUtil.clean(verification);
+        String cleanVerification = normalizeVerificationInput(verification);
 
         if (cleanVerification.isEmpty()) {
             return selectedResults;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getVerification().equalsIgnoreCase(cleanVerification)) {
-                selectedResults.add(result);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(verification)) = LOWER(TRIM(?)) " +
+                "ORDER BY result_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanVerification);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedResults.add(mapResultSetToResult(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getResultsByVerification failed for " + cleanVerification);
+            e.printStackTrace();
         }
 
         return selectedResults;
@@ -145,44 +249,101 @@ public class ResultDAO {
 
     public List<Result> getResultsByPublishedStatus(ServletContext context, String published) {
         List<Result> selectedResults = new ArrayList<>();
-        String cleanPublished = FileUtil.clean(published);
+        String cleanPublished = normalizePublishedInput(published);
 
         if (cleanPublished.isEmpty()) {
             return selectedResults;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getPublished().equalsIgnoreCase(cleanPublished)) {
-                selectedResults.add(result);
+        String sql = "SELECT result_id, student_id, exam_id, marks, grade, status, verification, published " +
+                "FROM results " +
+                "WHERE LOWER(TRIM(published)) = LOWER(TRIM(?)) " +
+                "ORDER BY result_id ASC";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanPublished);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    selectedResults.add(mapResultSetToResult(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> getResultsByPublishedStatus failed for " + cleanPublished);
+            e.printStackTrace();
         }
 
         return selectedResults;
     }
 
     public boolean addResult(ServletContext context, Result result) {
+        if (result != null) {
+            result.applyGradeAndStatusFromMarks();
+        }
+
         if (!isValidForCreate(context, result)) {
             return false;
         }
 
-        result.applyGradeAndStatusFromMarks();
+        String sql = "INSERT INTO results " +
+                "(result_id, student_id, exam_id, marks, grade, status, verification, published) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        return FileUtil.appendLine(context, FILE_NAME, result.toFileString());
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            fillResultStatement(statement, result);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> addResult failed");
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean updateResult(ServletContext context, Result result) {
+        if (result != null) {
+            result.applyGradeAndStatusFromMarks();
+        }
+
         if (!isValidForUpdate(context, result)) {
             return false;
         }
 
-        result.applyGradeAndStatusFromMarks();
+        String sql = "UPDATE results SET " +
+                "student_id = ?, " +
+                "exam_id = ?, " +
+                "marks = ?, " +
+                "grade = ?, " +
+                "status = ?, " +
+                "verification = ?, " +
+                "published = ? " +
+                "WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?))";
 
-        return FileUtil.updateLineById(
-                context,
-                FILE_NAME,
-                result.getResultId(),
-                result.toFileString()
-        );
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, result.getStudentId());
+            statement.setString(2, result.getExamId());
+            statement.setDouble(3, result.getMarksAsDouble());
+            statement.setString(4, result.getGrade());
+            statement.setString(5, result.getStatus());
+            statement.setString(6, result.getVerification());
+            statement.setString(7, result.getPublished());
+            statement.setString(8, result.getResultId());
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> updateResult failed for " +
+                    (result != null ? result.getResultId() : ""));
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean deleteResult(ServletContext context, String resultId) {
@@ -207,7 +368,19 @@ public class ResultDAO {
             return false;
         }
 
-        return FileUtil.deleteLineById(context, FILE_NAME, cleanResultId);
+        String sql = "DELETE FROM results WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanResultId);
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> deleteResult failed for " + cleanResultId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean publishResult(ServletContext context, String resultId) {
@@ -245,29 +418,58 @@ public class ResultDAO {
     }
 
     public boolean updateVerification(ServletContext context, String resultId, String verification) {
-        Result result = getResultById(context, resultId);
+        String cleanResultId = FileUtil.clean(resultId);
+        String cleanVerification = normalizeVerificationInput(verification);
+
+        if (cleanResultId.isEmpty() || cleanVerification.isEmpty()) {
+            return false;
+        }
+
+        Result result = getResultById(context, cleanResultId);
 
         if (result == null) {
             return false;
         }
 
-        result.setVerification(verification);
+        result.setVerification(cleanVerification);
 
         if (!result.isValidVerification()) {
             return false;
         }
 
-        return updateResultWithoutRegrading(context, result);
+        String sql = "UPDATE results SET verification = ? " +
+                "WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanVerification);
+            statement.setString(2, cleanResultId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> updateVerification failed for " + cleanResultId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public boolean updatePublishedStatus(ServletContext context, String resultId, String published) {
-        Result result = getResultById(context, resultId);
+        String cleanResultId = FileUtil.clean(resultId);
+        String cleanPublished = normalizePublishedInput(published);
+
+        if (cleanResultId.isEmpty() || cleanPublished.isEmpty()) {
+            return false;
+        }
+
+        Result result = getResultById(context, cleanResultId);
 
         if (result == null) {
             return false;
         }
 
-        result.setPublished(published);
+        result.setPublished(cleanPublished);
 
         if (!result.isValidPublishedStatus()) {
             return false;
@@ -277,28 +479,37 @@ public class ResultDAO {
             return false;
         }
 
-        return updateResultWithoutRegrading(context, result);
+        String sql = "UPDATE results SET published = ? " +
+                "WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanPublished);
+            statement.setString(2, cleanResultId);
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> updatePublishedStatus failed for " + cleanResultId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public int countAllResults(ServletContext context) {
-        return getAllResults(context).size();
+        return countByQuery("SELECT COUNT(*) FROM results");
     }
 
     public int countByStatus(ServletContext context, String status) {
-        int count = 0;
-        String cleanStatus = FileUtil.clean(status);
+        String cleanStatus = normalizeStatusInput(status);
 
         if (cleanStatus.isEmpty()) {
-            return count;
+            return 0;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getStatus().equalsIgnoreCase(cleanStatus)) {
-                count++;
-            }
-        }
-
-        return count;
+        String sql = "SELECT COUNT(*) FROM results WHERE LOWER(TRIM(status)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanStatus);
     }
 
     public int countPass(ServletContext context) {
@@ -314,116 +525,102 @@ public class ResultDAO {
     }
 
     public int countByGrade(ServletContext context, String grade) {
-        int count = 0;
-        String cleanGrade = FileUtil.clean(grade);
+        String cleanGrade = normalizeGradeInput(grade);
 
         if (cleanGrade.isEmpty()) {
-            return count;
+            return 0;
         }
 
-        for (Result result : getAllResults(context)) {
-            if (result.getGrade().equalsIgnoreCase(cleanGrade)) {
-                count++;
-            }
-        }
-
-        return count;
+        String sql = "SELECT COUNT(*) FROM results WHERE LOWER(TRIM(grade)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanGrade);
     }
 
     public int countVerified(ServletContext context) {
-        return getResultsByVerification(context, Result.VERIFICATION_VERIFIED).size();
+        return countByVerification(Result.VERIFICATION_VERIFIED);
     }
 
     public int countVerificationPending(ServletContext context) {
-        return getResultsByVerification(context, Result.VERIFICATION_PENDING).size();
+        return countByVerification(Result.VERIFICATION_PENDING);
     }
 
     public int countReview(ServletContext context) {
-        return getResultsByVerification(context, Result.VERIFICATION_REVIEW).size();
+        return countByVerification(Result.VERIFICATION_REVIEW);
     }
 
     public int countPublished(ServletContext context) {
-        return getResultsByPublishedStatus(context, Result.PUBLISHED_YES).size();
+        return countByPublished(Result.PUBLISHED_YES);
     }
 
     public int countNotPublished(ServletContext context) {
-        return getResultsByPublishedStatus(context, Result.PUBLISHED_NO).size();
+        return countByPublished(Result.PUBLISHED_NO);
     }
 
     public double calculateAverageMarks(ServletContext context) {
-        List<Result> results = getAllResults(context);
-
-        if (results.isEmpty()) {
-            return 0.0;
-        }
-
-        double total = 0.0;
-        int counted = 0;
-
-        for (Result result : results) {
-            total += result.getMarksAsDouble();
-            counted++;
-        }
-
-        if (counted == 0) {
-            return 0.0;
-        }
-
-        return total / counted;
+        String sql = "SELECT COALESCE(AVG(marks), 0) AS average_marks FROM results";
+        return calculateSingleDouble(sql, "");
     }
 
     public double calculateAverageMarksByExam(ServletContext context, String examId) {
-        List<Result> results = getResultsByExamId(context, examId);
+        String cleanExamId = FileUtil.clean(examId);
 
-        if (results.isEmpty()) {
+        if (cleanExamId.isEmpty()) {
             return 0.0;
         }
 
-        double total = 0.0;
-        int counted = 0;
-
-        for (Result result : results) {
-            total += result.getMarksAsDouble();
-            counted++;
-        }
-
-        if (counted == 0) {
-            return 0.0;
-        }
-
-        return total / counted;
+        String sql = "SELECT COALESCE(AVG(marks), 0) AS average_marks FROM results " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?))";
+        return calculateSingleDouble(sql, cleanExamId);
     }
 
     public double calculateHighestMarksByExam(ServletContext context, String examId) {
-        double highest = 0.0;
+        String cleanExamId = FileUtil.clean(examId);
 
-        for (Result result : getResultsByExamId(context, examId)) {
-            if (result.getMarksAsDouble() > highest) {
-                highest = result.getMarksAsDouble();
-            }
+        if (cleanExamId.isEmpty()) {
+            return 0.0;
         }
 
-        return highest;
+        String sql = "SELECT COALESCE(MAX(marks), 0) AS highest_marks FROM results " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?))";
+        return calculateSingleDouble(sql, cleanExamId);
     }
 
     public double calculateLowestMarksByExam(ServletContext context, String examId) {
-        double lowest = 0.0;
-        boolean found = false;
+        String cleanExamId = FileUtil.clean(examId);
 
-        for (Result result : getResultsByExamId(context, examId)) {
-            if (!found) {
-                lowest = result.getMarksAsDouble();
-                found = true;
-            } else if (result.getMarksAsDouble() < lowest) {
-                lowest = result.getMarksAsDouble();
-            }
+        if (cleanExamId.isEmpty()) {
+            return 0.0;
         }
 
-        return found ? lowest : 0.0;
+        String sql = "SELECT COALESCE(MIN(marks), 0) AS lowest_marks FROM results " +
+                "WHERE LOWER(TRIM(exam_id)) = LOWER(TRIM(?))";
+        return calculateSingleDouble(sql, cleanExamId);
     }
 
     public boolean existsById(ServletContext context, String resultId) {
-        return FileUtil.existsById(context, FILE_NAME, resultId);
+        String cleanResultId = FileUtil.clean(resultId);
+
+        if (cleanResultId.isEmpty()) {
+            return false;
+        }
+
+        String sql = "SELECT result_id FROM results " +
+                "WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?)) " +
+                "LIMIT 1";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanResultId);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                return resultSet.next();
+            }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> existsById failed for " + cleanResultId);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private boolean isValidForCreate(ServletContext context, Result result) {
@@ -431,7 +628,7 @@ public class ResultDAO {
             return false;
         }
 
-        if (FileUtil.existsById(context, FILE_NAME, result.getResultId())) {
+        if (existsById(context, result.getResultId())) {
             return false;
         }
 
@@ -478,12 +675,35 @@ public class ResultDAO {
             return false;
         }
 
-        return FileUtil.updateLineById(
-                context,
-                FILE_NAME,
-                result.getResultId(),
-                result.toFileString()
-        );
+        String sql = "UPDATE results SET " +
+                "student_id = ?, " +
+                "exam_id = ?, " +
+                "marks = ?, " +
+                "grade = ?, " +
+                "status = ?, " +
+                "verification = ?, " +
+                "published = ? " +
+                "WHERE LOWER(TRIM(result_id)) = LOWER(TRIM(?))";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, result.getStudentId());
+            statement.setString(2, result.getExamId());
+            statement.setDouble(3, result.getMarksAsDouble());
+            statement.setString(4, result.getGrade());
+            statement.setString(5, result.getStatus());
+            statement.setString(6, result.getVerification());
+            statement.setString(7, result.getPublished());
+            statement.setString(8, result.getResultId());
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> updateResultWithoutRegrading failed for " + result.getResultId());
+            e.printStackTrace();
+            return false;
+        }
     }
 
     private boolean isResultObjectValid(Result result) {
@@ -504,5 +724,200 @@ public class ResultDAO {
         }
 
         return result.isCompleteForSave();
+    }
+
+    private int countByVerification(String verification) {
+        String cleanVerification = normalizeVerificationInput(verification);
+
+        if (cleanVerification.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) FROM results WHERE LOWER(TRIM(verification)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanVerification);
+    }
+
+    private int countByPublished(String published) {
+        String cleanPublished = normalizePublishedInput(published);
+
+        if (cleanPublished.isEmpty()) {
+            return 0;
+        }
+
+        String sql = "SELECT COUNT(*) FROM results WHERE LOWER(TRIM(published)) = LOWER(TRIM(?))";
+        return countBySingleParameterQuery(sql, cleanPublished);
+    }
+
+    private int countByQuery(String sql) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql);
+             ResultSet resultSet = statement.executeQuery()) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> countByQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private int countBySingleParameterQuery(String sql, String parameter) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, parameter);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getInt(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> countBySingleParameterQuery failed");
+            e.printStackTrace();
+        }
+
+        return 0;
+    }
+
+    private double calculateSingleDouble(String sql, String parameter) {
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            if (!FileUtil.isBlank(parameter)) {
+                statement.setString(1, parameter);
+            }
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getDouble(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("RESULTDAO ERROR -> calculateSingleDouble failed");
+            e.printStackTrace();
+        }
+
+        return 0.0;
+    }
+
+    private void fillResultStatement(PreparedStatement statement, Result result) throws SQLException {
+        statement.setString(1, result.getResultId());
+        statement.setString(2, result.getStudentId());
+        statement.setString(3, result.getExamId());
+        statement.setDouble(4, result.getMarksAsDouble());
+        statement.setString(5, result.getGrade());
+        statement.setString(6, result.getStatus());
+        statement.setString(7, result.getVerification());
+        statement.setString(8, result.getPublished());
+    }
+
+    private Result mapResultSetToResult(ResultSet resultSet) throws SQLException {
+        return new Result(
+                safe(resultSet.getString("result_id")),
+                safe(resultSet.getString("student_id")),
+                safe(resultSet.getString("exam_id")),
+                formatMarks(resultSet.getDouble("marks")),
+                normalizeGradeInput(resultSet.getString("grade")),
+                normalizeStatusInput(resultSet.getString("status")),
+                normalizeVerificationInput(resultSet.getString("verification")),
+                normalizePublishedInput(resultSet.getString("published"))
+        );
+    }
+
+    private String normalizeGradeInput(String value) {
+        String gradeValue = safe(value).toUpperCase();
+
+        if (gradeValue.equalsIgnoreCase(Result.GRADE_A)) {
+            return Result.GRADE_A;
+        }
+
+        if (gradeValue.equalsIgnoreCase(Result.GRADE_B)) {
+            return Result.GRADE_B;
+        }
+
+        if (gradeValue.equalsIgnoreCase(Result.GRADE_C)) {
+            return Result.GRADE_C;
+        }
+
+        if (gradeValue.equalsIgnoreCase(Result.GRADE_S)) {
+            return Result.GRADE_S;
+        }
+
+        if (gradeValue.equalsIgnoreCase(Result.GRADE_F)) {
+            return Result.GRADE_F;
+        }
+
+        return gradeValue;
+    }
+
+    private String normalizeStatusInput(String value) {
+        String statusValue = safe(value);
+
+        if (statusValue.equalsIgnoreCase(Result.STATUS_PASS)) {
+            return Result.STATUS_PASS;
+        }
+
+        if (statusValue.equalsIgnoreCase(Result.STATUS_FAIL)) {
+            return Result.STATUS_FAIL;
+        }
+
+        if (statusValue.equalsIgnoreCase(Result.STATUS_PENDING)) {
+            return Result.STATUS_PENDING;
+        }
+
+        return statusValue;
+    }
+
+    private String normalizeVerificationInput(String value) {
+        String verificationValue = safe(value);
+
+        if (verificationValue.equalsIgnoreCase(Result.VERIFICATION_VERIFIED)) {
+            return Result.VERIFICATION_VERIFIED;
+        }
+
+        if (verificationValue.equalsIgnoreCase(Result.VERIFICATION_PENDING)) {
+            return Result.VERIFICATION_PENDING;
+        }
+
+        if (verificationValue.equalsIgnoreCase(Result.VERIFICATION_REVIEW)) {
+            return Result.VERIFICATION_REVIEW;
+        }
+
+        return verificationValue;
+    }
+
+    private String normalizePublishedInput(String value) {
+        String publishedValue = safe(value);
+
+        if (publishedValue.equalsIgnoreCase(Result.PUBLISHED_YES)) {
+            return Result.PUBLISHED_YES;
+        }
+
+        if (publishedValue.equalsIgnoreCase(Result.PUBLISHED_NO)
+                || publishedValue.equalsIgnoreCase("NotPublished")
+                || publishedValue.equalsIgnoreCase("Unpublished")) {
+            return Result.PUBLISHED_NO;
+        }
+
+        return publishedValue;
+    }
+
+    private String formatMarks(double marks) {
+        if (marks == Math.floor(marks)) {
+            return String.valueOf((int) marks);
+        }
+
+        return String.format("%.2f", marks);
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }

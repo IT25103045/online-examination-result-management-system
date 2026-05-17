@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS exam_submissions (
 );
 
 CREATE TABLE IF NOT EXISTS results (
-                                       result_id VARCHAR(30) PRIMARY KEY,
+    result_id VARCHAR(30) PRIMARY KEY,
     student_id VARCHAR(30) NOT NULL,
     exam_id VARCHAR(30) NOT NULL,
     marks DECIMAL(8,2) NOT NULL,
@@ -66,8 +66,7 @@ CREATE TABLE IF NOT EXISTS results (
     status VARCHAR(30) NOT NULL,
     verification VARCHAR(30) NOT NULL,
     published VARCHAR(30) NOT NULL
-    );
-
+);
 INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
 VALUES
     ('USR001', 'admin', 'admin123', 'admin@nextexam.lk', 'Admin', 'Active', ''),
@@ -93,7 +92,12 @@ INSERT IGNORE INTO exam_submissions
 VALUES
     ('SUB001', 'EX001', 'USR003', 'Student User', '2026-05-17 20:30:00', 'Q001=B,flagged=NO;Q002=C,flagged=NO;Q003=Constructor overloading example,flagged=NO', 10.00, 20.00, 'Marked');
 
-
+INSERT IGNORE INTO results
+(result_id, student_id, exam_id, marks, grade, status, verification, published)
+VALUES
+    ('RES001', 'USR003', 'EX001', 75.00, 'A', 'Pass', 'Verified', 'Published'),
+    ('RES002', 'ST001', 'EX001', 62.00, 'C', 'Pass', 'Pending', 'Not Published'),
+    ('RES003', 'ST002', 'EX002', 35.00, 'F', 'Fail', 'Review', 'Not Published');
 
 
 
