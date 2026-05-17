@@ -31,18 +31,19 @@ CREATE TABLE IF NOT EXISTS exams (
 );
 
 CREATE TABLE IF NOT EXISTS questions (
-                                         question_id VARCHAR(30) PRIMARY KEY,
+    question_id VARCHAR(30) PRIMARY KEY,
     exam_id VARCHAR(30) NOT NULL,
-    question_text TEXT NOT NULL,
     question_type VARCHAR(30) NOT NULL,
+    question_text TEXT NOT NULL,
     option_a TEXT,
     option_b TEXT,
     option_c TEXT,
     option_d TEXT,
     correct_answer VARCHAR(20),
     marks DECIMAL(8,2) NOT NULL,
-    status VARCHAR(30) DEFAULT 'Active'
-    );
+    status VARCHAR(30) NOT NULL DEFAULT 'Draft',
+    model_answer TEXT
+);
 
 CREATE TABLE IF NOT EXISTS exam_submissions (
                                                 submission_id VARCHAR(30) PRIMARY KEY,
