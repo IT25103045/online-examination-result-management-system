@@ -68,6 +68,24 @@ CREATE TABLE IF NOT EXISTS results (
     published VARCHAR(30) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id VARCHAR(30) PRIMARY KEY,
+    user_id VARCHAR(30) DEFAULT '',
+    user_role VARCHAR(30) DEFAULT '',
+    action VARCHAR(80) NOT NULL,
+    description TEXT NOT NULL,
+    created_at DATETIME NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS activity_logs (
+    id VARCHAR(30) PRIMARY KEY,
+    user_id VARCHAR(30) DEFAULT '',
+    user_role VARCHAR(30) DEFAULT '',
+    action VARCHAR(80) NOT NULL,
+    description TEXT NOT NULL,
+    created_at DATETIME NOT NULL
+);
+
 USE nextexam_db;
 
 DROP TABLE IF EXISTS notifications;
@@ -123,7 +141,12 @@ VALUES
     ('NT002', '', 'Admin', 'System Ready', 'MySQL migration is in progress.', 'System', 'Unread', '2026-05-17 20:05:00', NULL, '/dashboard.jsp'),
     ('NT003', '', 'All', 'Exam Portal Notice', 'Please check upcoming exams regularly.', 'Notice', 'Unread', '2026-05-17 20:10:00', NULL, '/my-exams');
 
-
+INSERT IGNORE INTO activity_logs
+(id, user_id, user_role, action, description, created_at)
+VALUES
+    ('LOG001', 'USR001', 'Admin', 'LOGIN', 'Admin logged in successfully.', '2026-05-17 20:00:00'),
+    ('LOG002', 'USR001', 'Admin', 'MYSQL_MIGRATION', 'Database migration started.', '2026-05-17 20:10:00'),
+    ('LOG003', 'USR003', 'Student', 'VIEW_EXAM', 'Student viewed available exams.', '2026-05-17 20:20:00');
 
 
 
