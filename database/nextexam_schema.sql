@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS questions (
 );
 
 CREATE TABLE IF NOT EXISTS exam_submissions (
-                                                submission_id VARCHAR(30) PRIMARY KEY,
+    submission_id VARCHAR(30) PRIMARY KEY,
     exam_id VARCHAR(30) NOT NULL,
     student_id VARCHAR(30) NOT NULL,
     student_name VARCHAR(120) NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS exam_submissions (
     score DECIMAL(8,2),
     total_marks DECIMAL(8,2),
     status VARCHAR(50) NOT NULL
-    );
+);
 
 CREATE TABLE IF NOT EXISTS results (
                                        result_id VARCHAR(30) PRIMARY KEY,
@@ -87,3 +87,32 @@ VALUES
     ('EX001', 'Object Oriented Programming', '2026-05-25', 60, 100.00, 'Scheduled'),
     ('EX002', 'Data Structures and Algorithms', '2026-05-28', 90, 100.00, 'Active'),
     ('EX003', 'Database Management Systems', '2026-06-02', 120, 100.00, 'Draft');
+
+INSERT IGNORE INTO exam_submissions
+(submission_id, exam_id, student_id, student_name, submitted_at, answers_data, score, total_marks, status)
+VALUES
+    ('SUB001', 'EX001', 'USR003', 'Student User', '2026-05-17 20:30:00', 'Q001=B,flagged=NO;Q002=C,flagged=NO;Q003=Constructor overloading example,flagged=NO', 10.00, 20.00, 'Marked');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
