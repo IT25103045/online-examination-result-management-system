@@ -137,6 +137,12 @@ CREATE TABLE IF NOT EXISTS result_appeals (
                                               reviewed_by VARCHAR(80) DEFAULT ''
 );
 
+CREATE TABLE IF NOT EXISTS system_settings (
+                                               setting_key VARCHAR(80) PRIMARY KEY,
+                                               setting_value TEXT NOT NULL
+);
+
+
 INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
 VALUES
     ('USR001', 'admin', 'admin123', 'admin@nextexam.lk', 'Admin', 'Active', ''),

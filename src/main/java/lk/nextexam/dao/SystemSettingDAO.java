@@ -3,23 +3,28 @@ package lk.nextexam.dao;
 import jakarta.servlet.ServletContext;
 import lk.nextexam.model.SystemSetting;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * SystemSettingDAO manages file-based platform settings.
+ * SystemSettingDAO manages MySQL platform settings.
  *
- * Storage file:
- * system_settings.txt
+ * MySQL table:
+ * system_settings
+ *
+ * Columns:
+ * setting_key, setting_value
  *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class SystemSettingDAO {
-
-    private static final String FILE_NAME = "system_settings.txt";
 
     public static final String KEY_APP_NAME = "appName";
     public static final String KEY_INSTITUTION_NAME = "institutionName";
@@ -33,15 +38,37 @@ public class SystemSettingDAO {
     public static final String KEY_HELP_DESK_MESSAGE = "helpDeskMessage";
 
     public List<SystemSetting> getAllSettings(ServletContext context) {
+        ensureDefaultSettings();
+
         List<SystemSetting> settings = new ArrayList<>();
-        List<String> lines = FileUtil.readLines(context, FILE_NAME);
 
-        for (String line : lines) {
-            SystemSetting setting = SystemSetting.fromFileString(line);
+        String sql = "SELECT setting_key, setting_value " +
+                "FROM system_settings " +
+                "ORDER BY FIELD(setting_key, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?), setting_key ASC";
 
-            if (setting != null && !setting.getSettingKey().isEmpty()) {
-                settings.add(setting);
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, KEY_APP_NAME);
+            statement.setString(2, KEY_INSTITUTION_NAME);
+            statement.setString(3, KEY_ACADEMIC_YEAR);
+            statement.setString(4, KEY_SEMESTER);
+            statement.setString(5, KEY_SUPPORT_EMAIL);
+            statement.setString(6, KEY_SUPPORT_PHONE);
+            statement.setString(7, KEY_FOOTER_TEXT);
+            statement.setString(8, KEY_SYSTEM_STATUS);
+            statement.setString(9, KEY_DEFAULT_EXAM_NOTE);
+            statement.setString(10, KEY_HELP_DESK_MESSAGE);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                while (resultSet.next()) {
+                    settings.add(mapResultSetToSystemSetting(resultSet));
+                }
             }
+
+        } catch (SQLException e) {
+            System.out.println("SYSTEMSETTINGDAO ERROR -> getAllSettings failed");
+            e.printStackTrace();
         }
 
         if (settings.isEmpty()) {
@@ -60,7 +87,6 @@ public class SystemSettingDAO {
         }
 
         ensureDefaultValues(map);
-
         return map;
     }
 
@@ -75,15 +101,34 @@ public class SystemSettingDAO {
             return defaultValue;
         }
 
-        Map<String, String> settings = getSettingsMap(context);
+        String sql = "SELECT setting_value FROM system_settings " +
+                "WHERE setting_key = ? " +
+                "LIMIT 1";
 
-        if (!settings.containsKey(cleanKey)) {
-            return defaultValue;
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanKey);
+
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String value = safe(resultSet.getString("setting_value"));
+                    return value.isEmpty() ? defaultValue : value;
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("SYSTEMSETTINGDAO ERROR -> getValue failed for " + cleanKey);
+            e.printStackTrace();
         }
 
-        String value = settings.get(cleanKey);
+        Map<String, String> defaults = defaultSettingsMap();
 
-        return value == null || value.trim().isEmpty() ? defaultValue : value.trim();
+        if (defaults.containsKey(cleanKey)) {
+            return defaults.get(cleanKey);
+        }
+
+        return defaultValue;
     }
 
     public boolean updateSettings(ServletContext context, Map<String, String> updatedSettings) {
@@ -119,17 +164,59 @@ public class SystemSettingDAO {
     }
 
     public boolean saveAllSettings(ServletContext context, List<SystemSetting> settings) {
-        List<String> lines = new ArrayList<>();
-
-        if (settings != null) {
-            for (SystemSetting setting : settings) {
-                if (setting != null && !setting.getSettingKey().isEmpty()) {
-                    lines.add(setting.toFileString());
-                }
-            }
+        if (settings == null) {
+            settings = getDefaultSettings();
         }
 
-        return FileUtil.writeLines(context, FILE_NAME, lines);
+        String sql = "INSERT INTO system_settings (setting_key, setting_value) " +
+                "VALUES (?, ?) " +
+                "ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            for (SystemSetting setting : settings) {
+                if (setting != null && !setting.getSettingKey().isEmpty()) {
+                    statement.setString(1, setting.getSettingKey());
+                    statement.setString(2, setting.getSettingValue());
+                    statement.addBatch();
+                }
+            }
+
+            statement.executeBatch();
+            return true;
+
+        } catch (SQLException e) {
+            System.out.println("SYSTEMSETTINGDAO ERROR -> saveAllSettings failed");
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public boolean updateValue(ServletContext context, String key, String value) {
+        String cleanKey = FileUtil.clean(key);
+
+        if (cleanKey.isEmpty()) {
+            return false;
+        }
+
+        String sql = "INSERT INTO system_settings (setting_key, setting_value) " +
+                "VALUES (?, ?) " +
+                "ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)";
+
+        try (Connection connection = DBConnection.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql)) {
+
+            statement.setString(1, cleanKey);
+            statement.setString(2, FileUtil.clean(value));
+
+            return statement.executeUpdate() > 0;
+
+        } catch (SQLException e) {
+            System.out.println("SYSTEMSETTINGDAO ERROR -> updateValue failed for " + cleanKey);
+            e.printStackTrace();
+            return false;
+        }
     }
 
     public List<SystemSetting> getDefaultSettings() {
@@ -149,26 +236,53 @@ public class SystemSettingDAO {
         return defaults;
     }
 
+    private void ensureDefaultSettings() {
+        saveAllSettings(null, getDefaultSettings());
+    }
+
     private void ensureDefaultValues(Map<String, String> map) {
         if (map == null) {
             return;
         }
 
-        putIfMissing(map, KEY_APP_NAME, "NextExamLK");
-        putIfMissing(map, KEY_INSTITUTION_NAME, "Sri Lanka Institute of Information Technology");
-        putIfMissing(map, KEY_ACADEMIC_YEAR, "2026");
-        putIfMissing(map, KEY_SEMESTER, "Year 1 Semester 2");
-        putIfMissing(map, KEY_SUPPORT_EMAIL, "support@nextexam.lk");
-        putIfMissing(map, KEY_SUPPORT_PHONE, "+94 77 000 0000");
-        putIfMissing(map, KEY_FOOTER_TEXT, "Secure Online Examination and Result Management Platform");
-        putIfMissing(map, KEY_SYSTEM_STATUS, "Online");
-        putIfMissing(map, KEY_DEFAULT_EXAM_NOTE, "Please read all exam rules carefully before starting the examination.");
-        putIfMissing(map, KEY_HELP_DESK_MESSAGE, "Contact the academic support team if you face login, exam, result, or document issues.");
+        Map<String, String> defaults = defaultSettingsMap();
+
+        for (Map.Entry<String, String> entry : defaults.entrySet()) {
+            putIfMissing(map, entry.getKey(), entry.getValue());
+        }
+    }
+
+    private Map<String, String> defaultSettingsMap() {
+        Map<String, String> defaults = new LinkedHashMap<>();
+
+        defaults.put(KEY_APP_NAME, "NextExamLK");
+        defaults.put(KEY_INSTITUTION_NAME, "Sri Lanka Institute of Information Technology");
+        defaults.put(KEY_ACADEMIC_YEAR, "2026");
+        defaults.put(KEY_SEMESTER, "Year 1 Semester 2");
+        defaults.put(KEY_SUPPORT_EMAIL, "support@nextexam.lk");
+        defaults.put(KEY_SUPPORT_PHONE, "+94 77 000 0000");
+        defaults.put(KEY_FOOTER_TEXT, "Secure Online Examination and Result Management Platform");
+        defaults.put(KEY_SYSTEM_STATUS, "Online");
+        defaults.put(KEY_DEFAULT_EXAM_NOTE, "Please read all exam rules carefully before starting the examination.");
+        defaults.put(KEY_HELP_DESK_MESSAGE, "Contact the academic support team if you face login, exam, result, or document issues.");
+
+        return defaults;
     }
 
     private void putIfMissing(Map<String, String> map, String key, String value) {
         if (!map.containsKey(key) || map.get(key) == null || map.get(key).trim().isEmpty()) {
             map.put(key, value);
         }
+    }
+
+    private SystemSetting mapResultSetToSystemSetting(ResultSet resultSet) throws SQLException {
+        return new SystemSetting(
+                safe(resultSet.getString("setting_key")),
+                safe(resultSet.getString("setting_value"))
+        );
+    }
+
+    private String safe(String value) {
+        return value == null ? "" : value.trim();
     }
 }
