@@ -6,10 +6,12 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import lk.nextexam.dao.AuditLogDAO;
 import lk.nextexam.dao.ExamSubmissionDAO;
 import lk.nextexam.dao.FileUtil;
 import lk.nextexam.dao.ManualMarkDAO;
 import lk.nextexam.dao.QuestionDAO;
+import lk.nextexam.model.AuditLog;
 import lk.nextexam.model.ExamSubmission;
 import lk.nextexam.model.ManualMark;
 import lk.nextexam.model.Question;
@@ -26,6 +28,9 @@ import java.util.List;
  * URL:
  * /manual-marking?submissionId=SUB001
  *
+ * Audit Logging:
+ * Records successful manual essay marking actions in audit_logs.txt.
+ *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
  */
@@ -38,6 +43,7 @@ public class ManualMarkingServlet extends HttpServlet {
     private final ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final ManualMarkDAO manualMarkDAO = new ManualMarkDAO();
+    private final AuditLogDAO auditLogDAO = new AuditLogDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -48,6 +54,15 @@ public class ManualMarkingServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (!isStaff(session)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Non-staff user attempted to access manual marking page.",
+                    AuditLog.STATUS_DENIED
+            );
+
             response.sendRedirect(request.getContextPath() + "/my-exams?error=accessDenied");
             return;
         }
@@ -55,6 +70,15 @@ public class ManualMarkingServlet extends HttpServlet {
         String submissionId = FileUtil.clean(request.getParameter("submissionId"));
 
         if (submissionId.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK_ACCESS",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking page access failed because submission ID was missing.",
+                    AuditLog.STATUS_WARNING
+            );
+
             redirectToSubmissions(request, response, "error", "missingSubmissionId");
             return;
         }
@@ -62,6 +86,15 @@ public class ManualMarkingServlet extends HttpServlet {
         ExamSubmission submission = submissionDAO.getSubmissionById(getServletContext(), submissionId);
 
         if (submission == null) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK_ACCESS",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking page access failed because submission " + submissionId + " was not found.",
+                    AuditLog.STATUS_WARNING
+            );
+
             redirectToSubmissions(request, response, "error", "submissionNotFound");
             return;
         }
@@ -74,6 +107,15 @@ public class ManualMarkingServlet extends HttpServlet {
         List<Question> essayQuestions = getEssayQuestions(allQuestions);
 
         if (essayQuestions.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK_ACCESS",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking page access failed because submission " + submissionId + " has no essay questions.",
+                    AuditLog.STATUS_WARNING
+            );
+
             redirectToSubmissions(request, response, "error", "noEssayQuestions");
             return;
         }
@@ -95,6 +137,15 @@ public class ManualMarkingServlet extends HttpServlet {
         HttpSession session = request.getSession(false);
 
         if (!isStaff(session)) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "ACCESS_DENIED",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Non-staff user attempted to submit manual essay marks.",
+                    AuditLog.STATUS_DENIED
+            );
+
             response.sendRedirect(request.getContextPath() + "/my-exams?error=accessDenied");
             return;
         }
@@ -102,6 +153,15 @@ public class ManualMarkingServlet extends HttpServlet {
         String submissionId = FileUtil.clean(request.getParameter("submissionId"));
 
         if (submissionId.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking failed because submission ID was missing.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToSubmissions(request, response, "error", "missingSubmissionId");
             return;
         }
@@ -109,11 +169,29 @@ public class ManualMarkingServlet extends HttpServlet {
         ExamSubmission submission = submissionDAO.getSubmissionById(getServletContext(), submissionId);
 
         if (submission == null) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking failed because submission " + submissionId + " was not found.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToSubmissions(request, response, "error", "submissionNotFound");
             return;
         }
 
         if (submission.isPublished() || submission.isCancelled()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking blocked because submission " + submissionId + " is already finalized.",
+                    AuditLog.STATUS_WARNING
+            );
+
             redirectToManualMarking(request, response, submissionId, "error", "finalizedSubmission");
             return;
         }
@@ -126,6 +204,15 @@ public class ManualMarkingServlet extends HttpServlet {
         List<Question> essayQuestions = getEssayQuestions(allQuestions);
 
         if (essayQuestions.isEmpty()) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marking failed because submission " + submissionId + " has no essay questions.",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToSubmissions(request, response, "error", "noEssayQuestions");
             return;
         }
@@ -139,6 +226,15 @@ public class ManualMarkingServlet extends HttpServlet {
             String feedback = FileUtil.clean(request.getParameter("feedback_" + questionId));
 
             if (markValue.isEmpty()) {
+                auditLogDAO.logAction(
+                        getServletContext(),
+                        request,
+                        "MANUAL_MARK",
+                        AuditLog.MODULE_MANUAL_MARKING,
+                        "Manual marking failed for submission " + submissionId + " because marks were missing for question " + questionId + ".",
+                        AuditLog.STATUS_FAILED
+                );
+
                 redirectToManualMarking(request, response, submissionId, "error", "missingMarks");
                 return;
             }
@@ -148,11 +244,29 @@ public class ManualMarkingServlet extends HttpServlet {
             try {
                 awardedMarks = Double.parseDouble(markValue);
             } catch (NumberFormatException e) {
+                auditLogDAO.logAction(
+                        getServletContext(),
+                        request,
+                        "MANUAL_MARK",
+                        AuditLog.MODULE_MANUAL_MARKING,
+                        "Manual marking failed for submission " + submissionId + " because invalid marks were entered for question " + questionId + ".",
+                        AuditLog.STATUS_FAILED
+                );
+
                 redirectToManualMarking(request, response, submissionId, "error", "invalidMarks");
                 return;
             }
 
             if (awardedMarks < 0 || awardedMarks > question.getMarksAsDouble()) {
+                auditLogDAO.logAction(
+                        getServletContext(),
+                        request,
+                        "MANUAL_MARK",
+                        AuditLog.MODULE_MANUAL_MARKING,
+                        "Manual marking failed for submission " + submissionId + " because marks were out of range for question " + questionId + ".",
+                        AuditLog.STATUS_FAILED
+                );
+
                 redirectToManualMarking(request, response, submissionId, "error", "marksOutOfRange");
                 return;
             }
@@ -172,6 +286,15 @@ public class ManualMarkingServlet extends HttpServlet {
             boolean saved = manualMarkDAO.saveOrUpdateMark(getServletContext(), mark);
 
             if (!saved) {
+                auditLogDAO.logAction(
+                        getServletContext(),
+                        request,
+                        "MANUAL_MARK",
+                        AuditLog.MODULE_MANUAL_MARKING,
+                        "Manual mark save failed for submission " + submissionId + ", question " + questionId + ".",
+                        AuditLog.STATUS_FAILED
+                );
+
                 redirectToManualMarking(request, response, submissionId, "error", "markSaveFailed");
                 return;
             }
@@ -192,9 +315,31 @@ public class ManualMarkingServlet extends HttpServlet {
         );
 
         if (!updated) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "MANUAL_MARK",
+                    AuditLog.MODULE_MANUAL_MARKING,
+                    "Manual marks were saved, but submission score update failed for " + submissionId + ".",
+                    AuditLog.STATUS_FAILED
+            );
+
             redirectToManualMarking(request, response, submissionId, "error", "submissionUpdateFailed");
             return;
         }
+
+        auditLogDAO.logAction(
+                getServletContext(),
+                request,
+                "MANUAL_MARK",
+                AuditLog.MODULE_MANUAL_MARKING,
+                "Saved manual essay marks for submission " + submissionId
+                        + ". MCQ Score: " + formatNumber(mcqScore)
+                        + ", Manual Score: " + formatNumber(manualScore)
+                        + ", Final Score: " + formatNumber(finalScore)
+                        + "/" + formatNumber(totalMarks) + ".",
+                AuditLog.STATUS_SUCCESS
+        );
 
         redirectToManualMarking(request, response, submissionId, "success", "manualMarkingSaved");
     }

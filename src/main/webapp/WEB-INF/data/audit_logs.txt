@@ -1,0 +1,5 @@
+AL001|ADM001|Admin|SYSTEM_ACCESS|System|Admin opened audit log dashboard.|Success|127.0.0.1|2026-05-17 10:00:00
+AL002|ADM001|Admin|EXPORT_REPORT|Reports|Admin exported students CSV report.|Success|127.0.0.1|2026-05-17 10:05:00
+AL003|LEC001|Lecturer|MANUAL_MARK|Manual Marking|Lecturer marked essay answers for submission SUB001.|Success|127.0.0.1|2026-05-17 10:15:00
+AL004|STU001|Student|CREATE_APPEAL|Result Appeals|Student submitted result appeal RA001.|Success|127.0.0.1|2026-05-17 10:20:00
+AL005|STU001|Student|ACCESS_DENIED|System|Student attempted to access admin audit logs.|Denied|127.0.0.1|2026-05-17 10:30:00
