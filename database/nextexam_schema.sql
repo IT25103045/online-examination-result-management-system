@@ -22,13 +22,13 @@ CREATE TABLE IF NOT EXISTS students (
     );
 
 CREATE TABLE IF NOT EXISTS exams (
-                                     exam_id VARCHAR(30) PRIMARY KEY,
+    exam_id VARCHAR(30) PRIMARY KEY,
     subject VARCHAR(150) NOT NULL,
     exam_date DATE NOT NULL,
     duration INT NOT NULL,
     total_marks DECIMAL(8,2) NOT NULL,
     status VARCHAR(30) NOT NULL
-    );
+);
 
 CREATE TABLE IF NOT EXISTS questions (
                                          question_id VARCHAR(30) PRIMARY KEY,
@@ -79,3 +79,10 @@ VALUES
     ('ST001', 'Nimal Perera', 'nimal@nextexam.lk', 'Software Engineering', 'Y1S1', '0771111111', 'Eligible'),
     ('ST002', 'Kavindi Silva', 'kavindi@nextexam.lk', 'Information Technology', 'Y2S1', '0772222222', 'Pending'),
     ('ST003', 'Ruwan Fernando', 'ruwan@nextexam.lk', 'Computer Science', 'Y3S1', '0773333333', 'Blocked');
+
+
+INSERT IGNORE INTO exams (exam_id, subject, exam_date, duration, total_marks, status)
+VALUES
+    ('EX001', 'Object Oriented Programming', '2026-05-25', 60, 100.00, 'Scheduled'),
+    ('EX002', 'Data Structures and Algorithms', '2026-05-28', 90, 100.00, 'Active'),
+    ('EX003', 'Database Management Systems', '2026-06-02', 120, 100.00, 'Draft');
