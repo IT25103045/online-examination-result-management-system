@@ -6,10 +6,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lk.nextexam.dao.ExamDAO;
+import lk.nextexam.dao.ExamIntegrityLogDAO;
 import lk.nextexam.dao.ExamSubmissionDAO;
 import lk.nextexam.dao.FileUtil;
 import lk.nextexam.dao.QuestionDAO;
 import lk.nextexam.model.Exam;
+import lk.nextexam.model.ExamIntegrityLog;
 import lk.nextexam.model.ExamSubmission;
 import lk.nextexam.model.Question;
 import lk.nextexam.model.User;
@@ -18,23 +20,27 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import lk.nextexam.dao.ExamIntegrityLogDAO;
-import lk.nextexam.model.ExamIntegrityLog;
 
 /**
  * Professional servlet for final exam submission.
  *
- * Responsibilities:
- * - Validate authenticated student session.
- * - Validate exam availability.
- * - Validate student-visible questions.
- * - Prevent duplicate attempts.
- * - Auto-mark MCQ questions.
- * - Mark essay/mixed exams as manual review required.
- * - Save clean answer payload.
+ * Pack 23:
+ * - Prevents duplicate submission
+ * - Supports auto-submit timeout workflow
+ * - Validates server-side exam deadline from session
+ * - Saves NO_ANSWER for missing answers
+ * - Logs timeout, late, duplicate, and successful submissions
+ *
+ * URL:
+ * /submit-exam
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 @WebServlet("/submit-exam")
 public class ExamSubmissionServlet extends HttpServlet {
+
+    private static final long SUBMISSION_GRACE_SECONDS = 10L;
 
     private final ExamDAO examDAO = new ExamDAO();
     private final QuestionDAO questionDAO = new QuestionDAO();
@@ -64,6 +70,12 @@ public class ExamSubmissionServlet extends HttpServlet {
         }
 
         String examId = FileUtil.clean(request.getParameter("examId"));
+        String autoSubmit = FileUtil.clean(request.getParameter("autoSubmit"));
+        String clientSubmitReason = FileUtil.clean(request.getParameter("clientSubmitReason"));
+        String remainingSecondsAtSubmit = FileUtil.clean(request.getParameter("remainingSecondsAtSubmit"));
+
+        boolean timeoutAutoSubmit = "true".equalsIgnoreCase(autoSubmit)
+                || "timeout".equalsIgnoreCase(clientSubmitReason);
 
         if (examId.isEmpty()) {
             redirectToMyExams(request, response, "error", "missingExamId");
@@ -77,13 +89,49 @@ public class ExamSubmissionServlet extends HttpServlet {
             return;
         }
 
-        if (!exam.canStudentAttempt()) {
+        if (submissionDAO.hasStudentSubmitted(getServletContext(), studentId, examId)) {
+            integrityLogDAO.addLog(
+                    getServletContext(),
+                    studentId,
+                    examId,
+                    ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
+                    "Duplicate submission attempt blocked"
+            );
+
+            redirectToMyExams(request, response, "error", "alreadySubmitted");
+            return;
+        }
+
+        if (!exam.canStudentAttempt() && !timeoutAutoSubmit) {
+            integrityLogDAO.addLog(
+                    getServletContext(),
+                    studentId,
+                    examId,
+                    ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
+                    "Manual submission blocked because exam is no longer attemptable"
+            );
+
             redirectToMyExams(request, response, "error", "examUnavailable");
             return;
         }
 
-        if (submissionDAO.hasStudentSubmitted(getServletContext(), studentId, examId)) {
-            redirectToMyExams(request, response, "error", "alreadySubmitted");
+        long nowMillis = System.currentTimeMillis();
+        String deadlineKey = "examAttemptDeadlineAt_" + examId + "_" + studentId;
+        Long deadlineAtMillis = getLongSessionValue(session, deadlineKey);
+
+        boolean deadlineKnown = deadlineAtMillis != null && deadlineAtMillis > 0;
+        boolean deadlinePassed = deadlineKnown && nowMillis > deadlineAtMillis + (SUBMISSION_GRACE_SECONDS * 1000L);
+
+        if (deadlinePassed && !timeoutAutoSubmit) {
+            integrityLogDAO.addLog(
+                    getServletContext(),
+                    studentId,
+                    examId,
+                    ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
+                    "Late manual submission blocked. Client remaining seconds: " + remainingSecondsAtSubmit
+            );
+
+            redirectToMyExams(request, response, "error", "examTimeExpired");
             return;
         }
 
@@ -110,13 +158,25 @@ public class ExamSubmissionServlet extends HttpServlet {
         String submissionId = FileUtil.generateId("SUB");
         String timestamp = ExamSubmission.nowTimestamp();
 
+        String finalAnswersData = calculation.answersData;
+
+        if (timeoutAutoSubmit) {
+            finalAnswersData = finalAnswersData
+                    + ";META_SUBMIT_REASON=TIMEOUT_AUTO_SUBMIT"
+                    + ",remainingSecondsAtSubmit=" + encodeAnswerValue(remainingSecondsAtSubmit);
+        } else {
+            finalAnswersData = finalAnswersData
+                    + ";META_SUBMIT_REASON=MANUAL_SUBMIT"
+                    + ",remainingSecondsAtSubmit=" + encodeAnswerValue(remainingSecondsAtSubmit);
+        }
+
         ExamSubmission submission = new ExamSubmission(
                 submissionId,
                 examId,
                 studentId,
                 studentName,
                 timestamp,
-                calculation.answersData,
+                finalAnswersData,
                 formatNumber(calculation.score),
                 formatNumber(calculation.totalMarks),
                 submissionStatus
@@ -125,16 +185,33 @@ public class ExamSubmissionServlet extends HttpServlet {
         boolean saved = submissionDAO.addSubmission(getServletContext(), submission);
 
         if (saved) {
+            clearExamAttemptSession(session, examId, studentId);
+
             integrityLogDAO.addLog(
                     getServletContext(),
                     studentId,
                     examId,
                     ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
-                    studentName + " submitted final answers"
+                    timeoutAutoSubmit
+                            ? "Exam auto-submitted after timer expiry"
+                            : "Student submitted final answers manually"
             );
 
-            redirectToMyExams(request, response, "success", "examSubmitted");
+            redirectToMyExams(
+                    request,
+                    response,
+                    "success",
+                    timeoutAutoSubmit ? "examAutoSubmitted" : "examSubmitted"
+            );
         } else {
+            integrityLogDAO.addLog(
+                    getServletContext(),
+                    studentId,
+                    examId,
+                    ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
+                    "Submission save failed"
+            );
+
             redirectToMyExams(request, response, "error", "submissionFailed");
         }
     }
@@ -187,14 +264,11 @@ public class ExamSubmissionServlet extends HttpServlet {
             return "NO_ANSWER";
         }
 
-        /*
-         * Prevent breaking answersData structure.
-         * We use ; and , as internal separators, so remove them from answer payload.
-         */
         return cleanAnswer
                 .replace(";", " ")
                 .replace(",", " ")
                 .replace("=", " ")
+                .replace("|", " ")
                 .replaceAll("\\s{2,}", " ")
                 .trim();
     }
@@ -237,6 +311,37 @@ public class ExamSubmissionServlet extends HttpServlet {
         return value == null ? "" : String.valueOf(value).trim();
     }
 
+    private Long getLongSessionValue(HttpSession session, String key) {
+        if (session == null || key == null) {
+            return null;
+        }
+
+        Object value = session.getAttribute(key);
+
+        if (value instanceof Long) {
+            return (Long) value;
+        }
+
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void clearExamAttemptSession(HttpSession session, String examId, String studentId) {
+        if (session == null) {
+            return;
+        }
+
+        session.removeAttribute("examAttemptStartedAt_" + examId + "_" + studentId);
+        session.removeAttribute("examAttemptDeadlineAt_" + examId + "_" + studentId);
+    }
+
     private void redirectToMyExams(HttpServletRequest request,
                                    HttpServletResponse response,
                                    String messageType,
@@ -262,6 +367,10 @@ public class ExamSubmissionServlet extends HttpServlet {
 
         request.setCharacterEncoding("UTF-8");
         response.setCharacterEncoding("UTF-8");
+
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate, private");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
     }
 
     private String formatNumber(double value) {
