@@ -1,4 +1,5 @@
 package lk.nextexam.servlet;
+
 import lk.nextexam.dao.ExamIntegrityLogDAO;
 import lk.nextexam.model.ExamIntegrityLog;
 import jakarta.servlet.ServletException;
@@ -23,13 +24,14 @@ import java.util.List;
 /**
  * Professional servlet for loading the secure student exam console.
  *
- * Responsibilities:
- * - Validate authenticated student session.
- * - Validate exam availability.
- * - Validate exam readiness.
- * - Prevent duplicate attempts.
- * - Load only student-visible questions.
- * - Prepare exam statistics for professional UI.
+ * Pack 23:
+ * - Server-side attempt deadline stored in session
+ * - Server-calculated remaining seconds sent to JSP
+ * - Expired attempts are blocked safely
+ * - Duplicate attempts are prevented
+ *
+ * Responsible Member:
+ * IT25103045 - De Silva H.L.D.C.P.C
  */
 @WebServlet("/exam-console")
 public class ExamConsoleServlet extends HttpServlet {
@@ -38,7 +40,6 @@ public class ExamConsoleServlet extends HttpServlet {
     private final QuestionDAO questionDAO = new QuestionDAO();
     private final ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
     private final ExamIntegrityLogDAO integrityLogDAO = new ExamIntegrityLogDAO();
-
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -113,6 +114,37 @@ public class ExamConsoleServlet extends HttpServlet {
             return;
         }
 
+        long nowMillis = System.currentTimeMillis();
+        long examDurationMillis = Math.max(1, exam.getDurationMinutes()) * 60L * 1000L;
+
+        String attemptStartKey = "examAttemptStartedAt_" + examId + "_" + studentId;
+        String attemptDeadlineKey = "examAttemptDeadlineAt_" + examId + "_" + studentId;
+
+        Long deadlineAtMillis = getLongSessionValue(session, attemptDeadlineKey);
+
+        if (deadlineAtMillis == null || deadlineAtMillis <= 0) {
+            long startedAtMillis = nowMillis;
+            deadlineAtMillis = startedAtMillis + examDurationMillis;
+
+            session.setAttribute(attemptStartKey, startedAtMillis);
+            session.setAttribute(attemptDeadlineKey, deadlineAtMillis);
+        }
+
+        long remainingSeconds = Math.max(0, (deadlineAtMillis - nowMillis) / 1000L);
+
+        if (remainingSeconds <= 0) {
+            integrityLogDAO.addLog(
+                    getServletContext(),
+                    studentId,
+                    examId,
+                    ExamIntegrityLog.EVENT_EXAM_SUBMITTED,
+                    "Student attempted to open exam console after timer expired"
+            );
+
+            redirectToMyExams(request, response, "error", "examTimeExpired");
+            return;
+        }
+
         ExamConsoleStats stats = calculateStats(questions);
 
         request.setAttribute("exam", exam);
@@ -130,12 +162,15 @@ public class ExamConsoleServlet extends HttpServlet {
         request.setAttribute("requiresManualReview", stats.essayQuestionCount > 0);
         request.setAttribute("readinessMessage", readinessMessage);
 
+        request.setAttribute("serverRemainingSeconds", remainingSeconds);
+        request.setAttribute("serverDeadlineAtMillis", deadlineAtMillis);
+
         integrityLogDAO.addLog(
                 getServletContext(),
                 studentId,
                 examId,
                 ExamIntegrityLog.EVENT_EXAM_STARTED,
-                studentName + " opened the secure exam console"
+                studentName + " opened the secure exam console. Remaining seconds: " + remainingSeconds
         );
 
         request.getRequestDispatcher("/exam-console/index.jsp").forward(request, response);
@@ -198,6 +233,28 @@ public class ExamConsoleServlet extends HttpServlet {
 
         Object value = session.getAttribute(key);
         return value == null ? "" : String.valueOf(value).trim();
+    }
+
+    private Long getLongSessionValue(HttpSession session, String key) {
+        if (session == null || key == null) {
+            return null;
+        }
+
+        Object value = session.getAttribute(key);
+
+        if (value instanceof Long) {
+            return (Long) value;
+        }
+
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
+        }
+
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void redirectToMyExams(HttpServletRequest request,

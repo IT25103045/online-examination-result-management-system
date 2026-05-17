@@ -53,6 +53,14 @@
 
     int durationMinutes = exam != null ? exam.getDurationMinutes() : 60;
 
+    long serverRemainingSeconds = request.getAttribute("serverRemainingSeconds") != null
+            ? (Long) request.getAttribute("serverRemainingSeconds")
+            : durationMinutes * 60L;
+
+    long serverDeadlineAtMillis = request.getAttribute("serverDeadlineAtMillis") != null
+            ? (Long) request.getAttribute("serverDeadlineAtMillis")
+            : System.currentTimeMillis() + (serverRemainingSeconds * 1000L);
+
     String totalMarksDisplay = totalMarks == Math.floor(totalMarks)
             ? String.valueOf((int) totalMarks)
             : String.format("%.2f", totalMarks);
@@ -149,6 +157,11 @@
               autocomplete="off">
 
             <input type="hidden" name="examId" value="<%= FileUtil.h(exam.getExamId()) %>">
+            <input type="hidden" name="autoSubmit" id="autoSubmit" value="false">
+            <input type="hidden" name="remainingSecondsAtSubmit" id="remainingSecondsAtSubmit" value="">
+            <input type="hidden" name="clientSubmitReason" id="clientSubmitReason" value="manual">
+            <input type="hidden" id="serverRemainingSeconds" value="<%= serverRemainingSeconds %>">
+            <input type="hidden" id="serverDeadlineAtMillis" value="<%= serverDeadlineAtMillis %>">
 
             <main class="exam-pro-layout">
 
@@ -644,12 +657,15 @@
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const totalQuestions = <%= questionCount %>;
-        const durationSeconds = <%= durationMinutes %> * 60;
+        const durationSeconds = Number(document.getElementById("serverRemainingSeconds")?.value || "<%= serverRemainingSeconds %>");
+        const serverDeadlineAtMillis = Number(document.getElementById("serverDeadlineAtMillis")?.value || "<%= serverDeadlineAtMillis %>");
         const contextPath = "<%= request.getContextPath() %>";
         const examId = "<%= exam != null ? FileUtil.h(exam.getExamId()) : "" %>";
 
         let currentQuestion = 1;
-        let remainingSeconds = durationSeconds;
+        let remainingSeconds = Math.max(0, durationSeconds);
+        let timerWarningFiveShown = false;
+        let timerWarningOneShown = false;
         let isSubmitting = false;
         let integrityWarnings = 0;
         let lastVisibilityWarningAt = 0;
@@ -694,18 +710,43 @@
         function updateTimer() {
             if (!timer) return;
 
+            const now = Date.now();
+
+            if (serverDeadlineAtMillis && serverDeadlineAtMillis > 0) {
+                remainingSeconds = Math.max(0, Math.floor((serverDeadlineAtMillis - now) / 1000));
+            } else {
+                remainingSeconds = Math.max(0, remainingSeconds);
+            }
+
             timer.textContent = formatTime(remainingSeconds);
 
-            if (remainingSeconds <= 300 && timerBox) {
-                timerBox.classList.add("danger");
+            if (timerBox) {
+                timerBox.classList.remove("warning", "danger", "expired");
+
+                if (remainingSeconds <= 0) {
+                    timerBox.classList.add("expired");
+                } else if (remainingSeconds <= 60) {
+                    timerBox.classList.add("danger");
+                } else if (remainingSeconds <= 300) {
+                    timerBox.classList.add("warning");
+                }
+            }
+
+            if (remainingSeconds <= 300 && !timerWarningFiveShown) {
+                timerWarningFiveShown = true;
+                showIntegrityWarning("Only 5 minutes remaining. Please review and submit soon.");
+                logIntegrityEvent("TIMER_WARNING", "Five minute timer warning shown");
+            }
+
+            if (remainingSeconds <= 60 && !timerWarningOneShown) {
+                timerWarningOneShown = true;
+                showIntegrityWarning("Only 1 minute remaining. The exam will auto-submit soon.");
+                logIntegrityEvent("TIMER_WARNING", "One minute timer warning shown");
             }
 
             if (remainingSeconds <= 0) {
                 submitExamAutomatically();
-                return;
             }
-
-            remainingSeconds--;
         }
 
         function submitExamAutomatically() {
@@ -714,12 +755,34 @@
             isSubmitting = true;
             window.onbeforeunload = null;
 
+            const autoSubmitInput = document.getElementById("autoSubmit");
+            const reasonInput = document.getElementById("clientSubmitReason");
+            const remainingInput = document.getElementById("remainingSecondsAtSubmit");
+
+            if (autoSubmitInput) {
+                autoSubmitInput.value = "true";
+            }
+
+            if (reasonInput) {
+                reasonInput.value = "timeout";
+            }
+
+            if (remainingInput) {
+                remainingInput.value = String(Math.max(0, remainingSeconds));
+            }
+
             logIntegrityEvent("EXAM_SUBMITTED", "Exam auto-submitted because timer ended");
 
             if (finalSubmitBtn) {
                 finalSubmitBtn.disabled = true;
-                finalSubmitBtn.innerHTML = "<i class='bi bi-hourglass-split me-2'></i>Submitting...";
+                finalSubmitBtn.innerHTML = "<i class='bi bi-hourglass-split me-2'></i>Auto submitting...";
             }
+
+            document.querySelectorAll("button, input, textarea, select").forEach(function (element) {
+                if (element.type !== "hidden") {
+                    element.classList.add("exam-submit-locked");
+                }
+            });
 
             examForm.submit();
         }
@@ -981,6 +1044,22 @@
                 isSubmitting = true;
                 window.onbeforeunload = null;
 
+                const autoSubmitInput = document.getElementById("autoSubmit");
+                const reasonInput = document.getElementById("clientSubmitReason");
+                const remainingInput = document.getElementById("remainingSecondsAtSubmit");
+
+                if (autoSubmitInput) {
+                    autoSubmitInput.value = "false";
+                }
+
+                if (reasonInput) {
+                    reasonInput.value = "manual";
+                }
+
+                if (remainingInput) {
+                    remainingInput.value = String(Math.max(0, remainingSeconds));
+                }
+
                 logIntegrityEvent("EXAM_SUBMITTED", "Student clicked final submit button");
 
                 if (finalSubmitBtn) {
@@ -1005,7 +1084,7 @@
         logIntegrityEvent("EXAM_STARTED", "Student started the secure exam console");
 
         updateTimer();
-        setInterval(updateTimer, 1000);
+        const timerInterval = setInterval(updateTimer, 1000);
         showQuestion(1);
         updateSummary();
     });

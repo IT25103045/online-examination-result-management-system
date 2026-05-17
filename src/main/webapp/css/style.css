@@ -6824,3 +6824,56 @@ body.sidebar-open {
         flex-direction: column;
     }
 }
+/* ================================
+   Pack 23 - Exam Timer Hardening
+================================ */
+.exam-pro-timer.warning {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    color: #92400e;
+    border-color: #fde68a;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.12);
+}
+
+.exam-pro-timer.expired {
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    color: var(--danger);
+    border-color: #fca5a5;
+    animation: examTimerPulse 0.7s infinite;
+}
+
+.exam-submit-locked {
+    pointer-events: none;
+    opacity: 0.72;
+}
+
+.exam-time-expired-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: rgba(15, 23, 42, 0.82);
+    color: #ffffff;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+}
+
+.exam-time-expired-overlay.show {
+    display: flex;
+}
+
+.exam-time-expired-box {
+    max-width: 460px;
+    background: #ffffff;
+    color: var(--dark);
+    border-radius: 28px;
+    padding: 28px;
+    box-shadow: var(--shadow-lg);
+}
+
+.exam-time-expired-box i {
+    font-size: 44px;
+    color: var(--danger);
+    margin-bottom: 12px;
+}
