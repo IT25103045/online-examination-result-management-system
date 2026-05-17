@@ -67,6 +67,23 @@ CREATE TABLE IF NOT EXISTS results (
     verification VARCHAR(30) NOT NULL,
     published VARCHAR(30) NOT NULL
 );
+
+USE nextexam_db;
+
+DROP TABLE IF EXISTS notifications;
+
+CREATE TABLE notifications (
+     notification_id VARCHAR(30) PRIMARY KEY,
+     target_user_id VARCHAR(30) DEFAULT '',
+     target_role VARCHAR(30) DEFAULT '',
+     title VARCHAR(180) NOT NULL,
+     message TEXT NOT NULL,
+     type VARCHAR(30) NOT NULL,
+     status VARCHAR(30) NOT NULL DEFAULT 'Unread',
+     created_at DATETIME NOT NULL,
+     read_at DATETIME NULL,
+     target_url VARCHAR(255) DEFAULT ''
+);
 INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
 VALUES
     ('USR001', 'admin', 'admin123', 'admin@nextexam.lk', 'Admin', 'Active', ''),
@@ -99,6 +116,12 @@ VALUES
     ('RES002', 'ST001', 'EX001', 62.00, 'C', 'Pass', 'Pending', 'Not Published'),
     ('RES003', 'ST002', 'EX002', 35.00, 'F', 'Fail', 'Review', 'Not Published');
 
+INSERT IGNORE INTO notifications
+(notification_id, target_user_id, target_role, title, message, type, status, created_at, read_at, target_url)
+VALUES
+    ('NT001', 'USR003', '', 'Welcome to NextExamLK', 'Your student account is ready.', 'System', 'Unread', '2026-05-17 20:00:00', NULL, '/dashboard.jsp'),
+    ('NT002', '', 'Admin', 'System Ready', 'MySQL migration is in progress.', 'System', 'Unread', '2026-05-17 20:05:00', NULL, '/dashboard.jsp'),
+    ('NT003', '', 'All', 'Exam Portal Notice', 'Please check upcoming exams regularly.', 'Notice', 'Unread', '2026-05-17 20:10:00', NULL, '/my-exams');
 
 
 
