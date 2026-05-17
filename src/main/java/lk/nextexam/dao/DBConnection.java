@@ -21,7 +21,7 @@ public class DBConnection {
             "jdbc:mysql://localhost:3306/nextexam_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
 
     private static final String DEFAULT_USER = "root";
-    private static final String DEFAULT_PASSWORD = "";
+    private static final String DEFAULT_PASSWORD = "20031107Cp#";
 
     private DBConnection() {
     }

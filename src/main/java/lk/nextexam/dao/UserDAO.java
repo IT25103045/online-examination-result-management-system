@@ -20,10 +20,17 @@ import java.util.List;
  * Columns:
  * user_id, username, password, email, role, status, profile_image
  *
+ * Notes:
+ * - Uses MySQL through DBConnection.
+ * - Login now fetches by username/email first, then validates role, status, and password in Java.
+ * - This makes debugging login failures easier.
+ *
  * Responsible Member:
  * IT25103045 - De Silva H.L.D.C.P.C
  */
 public class UserDAO {
+
+    private static final boolean DEBUG_LOGIN = false;
 
     public List<User> getAllUsers(ServletContext context) {
         List<User> users = new ArrayList<>();
@@ -41,6 +48,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getAllUsers failed");
             e.printStackTrace();
         }
 
@@ -60,7 +68,7 @@ public class UserDAO {
         }
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
-                "FROM users WHERE LOWER(user_id) = LOWER(?) LIMIT 1";
+                "FROM users WHERE LOWER(TRIM(user_id)) = LOWER(TRIM(?)) LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -74,6 +82,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getUserById failed for " + cleanUserId);
             e.printStackTrace();
         }
 
@@ -88,7 +97,7 @@ public class UserDAO {
         }
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
-                "FROM users WHERE LOWER(username) = LOWER(?) LIMIT 1";
+                "FROM users WHERE LOWER(TRIM(username)) = LOWER(TRIM(?)) LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -102,6 +111,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getUserByUsername failed for " + cleanUsername);
             e.printStackTrace();
         }
 
@@ -116,7 +126,7 @@ public class UserDAO {
         }
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
-                "FROM users WHERE LOWER(email) = LOWER(?) LIMIT 1";
+                "FROM users WHERE LOWER(TRIM(email)) = LOWER(TRIM(?)) LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -130,6 +140,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getUserByEmail failed for " + cleanEmail);
             e.printStackTrace();
         }
 
@@ -145,7 +156,8 @@ public class UserDAO {
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
                 "FROM users " +
-                "WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?) " +
+                "WHERE LOWER(TRIM(username)) = LOWER(TRIM(?)) " +
+                "OR LOWER(TRIM(email)) = LOWER(TRIM(?)) " +
                 "LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
@@ -161,6 +173,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getUserByUsernameOrEmail failed for " + value);
             e.printStackTrace();
         }
 
@@ -169,14 +182,14 @@ public class UserDAO {
 
     public List<User> getUsersByRole(ServletContext context, String role) {
         List<User> selectedUsers = new ArrayList<>();
-        String cleanRole = FileUtil.clean(role);
+        String cleanRole = normalizeRoleInput(role);
 
         if (cleanRole.isEmpty()) {
             return selectedUsers;
         }
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
-                "FROM users WHERE LOWER(role) = LOWER(?) ORDER BY user_id ASC";
+                "FROM users WHERE LOWER(TRIM(role)) = LOWER(TRIM(?)) ORDER BY user_id ASC";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -190,6 +203,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getUsersByRole failed for " + cleanRole);
             e.printStackTrace();
         }
 
@@ -199,14 +213,14 @@ public class UserDAO {
 
     public List<User> getUsersByStatus(ServletContext context, String status) {
         List<User> selectedUsers = new ArrayList<>();
-        String cleanStatus = FileUtil.clean(status);
+        String cleanStatus = normalizeStatusInput(status);
 
         if (cleanStatus.isEmpty()) {
             return selectedUsers;
         }
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
-                "FROM users WHERE LOWER(status) = LOWER(?) ORDER BY user_id ASC";
+                "FROM users WHERE LOWER(TRIM(status)) = LOWER(TRIM(?)) ORDER BY user_id ASC";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -220,6 +234,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getUsersByStatus failed for " + cleanStatus);
             e.printStackTrace();
         }
 
@@ -240,7 +255,8 @@ public class UserDAO {
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
                 "FROM users " +
-                "WHERE LOWER(role) = LOWER(?) AND LOWER(status) = LOWER(?) " +
+                "WHERE LOWER(TRIM(role)) = LOWER(TRIM(?)) " +
+                "AND LOWER(TRIM(status)) = LOWER(TRIM(?)) " +
                 "ORDER BY user_id ASC";
 
         try (Connection connection = DBConnection.getConnection();
@@ -256,6 +272,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> getActiveUsersByRole failed for " + role);
             e.printStackTrace();
         }
 
@@ -266,48 +283,79 @@ public class UserDAO {
     /**
      * Authenticates a user by username/email + password + role.
      *
-     * Current compatibility:
-     * - Plain text passwords still work.
+     * Debug-safe flow:
+     * 1. Fetch user using username/email only.
+     * 2. Validate role in Java.
+     * 3. Validate active status.
+     * 4. Validate password.
      *
-     * Future:
-     * - Add BCrypt and verify hashed passwords inside verifyPassword().
+     * This helps identify whether invalid login is caused by DB, role, status, password, or connection.
      */
     public User login(ServletContext context, String usernameOrEmail, String password, String role) {
         String cleanUsernameOrEmail = FileUtil.clean(usernameOrEmail);
         String cleanPassword = password == null ? "" : password.trim();
-        String cleanRole = FileUtil.clean(role);
+        String cleanRole = normalizeRoleInput(role);
+
+        debug("LOGIN DEBUG -> input username/email = [" + cleanUsernameOrEmail + "]");
+        debug("LOGIN DEBUG -> input role = [" + cleanRole + "]");
+        debug("LOGIN DEBUG -> input password length = " + cleanPassword.length());
 
         if (cleanUsernameOrEmail.isEmpty() || cleanPassword.isEmpty() || cleanRole.isEmpty()) {
+            debug("LOGIN DEBUG -> failed because username/password/role is empty");
             return null;
         }
 
         String sql = "SELECT user_id, username, password, email, role, status, profile_image " +
                 "FROM users " +
-                "WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)) " +
-                "AND LOWER(role) = LOWER(?) " +
+                "WHERE LOWER(TRIM(username)) = LOWER(TRIM(?)) " +
+                "OR LOWER(TRIM(email)) = LOWER(TRIM(?)) " +
                 "LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
 
+            debug("LOGIN DEBUG -> connected to MySQL successfully");
+
             statement.setString(1, cleanUsernameOrEmail);
             statement.setString(2, cleanUsernameOrEmail);
-            statement.setString(3, cleanRole);
 
             try (ResultSet resultSet = statement.executeQuery()) {
-                if (resultSet.next()) {
-                    User user = mapResultSetToUser(resultSet);
-
-                    boolean active = user.canLogin();
-                    boolean passwordMatches = verifyPassword(cleanPassword, user.getPassword());
-
-                    if (active && passwordMatches) {
-                        return user;
-                    }
+                if (!resultSet.next()) {
+                    debug("LOGIN DEBUG -> NO USER FOUND for [" + cleanUsernameOrEmail + "]");
+                    return null;
                 }
+
+                User user = mapResultSetToUser(resultSet);
+
+                String dbRole = normalizeRoleInput(user.getRole());
+                String dbStatus = normalizeStatusInput(user.getStatus());
+
+                boolean roleMatches = dbRole.equalsIgnoreCase(cleanRole);
+                boolean active = User.STATUS_ACTIVE.equalsIgnoreCase(dbStatus) && user.isValidRole();
+                boolean passwordMatches = verifyPassword(cleanPassword, user.getPassword());
+
+                debug("LOGIN DEBUG -> DB userId = [" + user.getUserId() + "]");
+                debug("LOGIN DEBUG -> DB username = [" + user.getUsername() + "]");
+                debug("LOGIN DEBUG -> DB email = [" + user.getEmail() + "]");
+                debug("LOGIN DEBUG -> DB role = [" + dbRole + "]");
+                debug("LOGIN DEBUG -> DB status = [" + dbStatus + "]");
+                debug("LOGIN DEBUG -> roleMatches = " + roleMatches);
+                debug("LOGIN DEBUG -> active = " + active);
+                debug("LOGIN DEBUG -> passwordMatches = " + passwordMatches);
+
+                if (roleMatches && active && passwordMatches) {
+                    debug("LOGIN DEBUG -> LOGIN SUCCESS");
+                    return user;
+                }
+
+                debug("LOGIN DEBUG -> LOGIN FAILED AFTER USER FOUND");
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> login SQL failed");
+            e.printStackTrace();
+        } catch (Exception e) {
+            System.out.println("USERDAO ERROR -> login failed unexpectedly");
             e.printStackTrace();
         }
 
@@ -330,6 +378,7 @@ public class UserDAO {
             return statement.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> addUser failed");
             e.printStackTrace();
             return false;
         }
@@ -363,6 +412,7 @@ public class UserDAO {
             return statement.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> updateUser failed for " + (user != null ? user.getUserId() : ""));
             e.printStackTrace();
             return false;
         }
@@ -384,6 +434,7 @@ public class UserDAO {
             return statement.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> deleteUser failed for " + cleanUserId);
             e.printStackTrace();
             return false;
         }
@@ -403,7 +454,7 @@ public class UserDAO {
 
     private boolean updateUserStatus(String userId, String status) {
         String cleanUserId = FileUtil.clean(userId);
-        String cleanStatus = FileUtil.clean(status);
+        String cleanStatus = normalizeStatusInput(status);
 
         if (cleanUserId.isEmpty() || cleanStatus.isEmpty()) {
             return false;
@@ -420,6 +471,7 @@ public class UserDAO {
             return statement.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> updateUserStatus failed for " + cleanUserId);
             e.printStackTrace();
             return false;
         }
@@ -439,8 +491,9 @@ public class UserDAO {
         }
 
         String sql = "SELECT user_id FROM users " +
-                "WHERE (LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)) " +
-                "AND LOWER(user_id) <> LOWER(?) " +
+                "WHERE (LOWER(TRIM(username)) = LOWER(TRIM(?)) " +
+                "OR LOWER(TRIM(email)) = LOWER(TRIM(?))) " +
+                "AND LOWER(TRIM(user_id)) <> LOWER(TRIM(?)) " +
                 "LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
@@ -455,6 +508,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> isUsernameOrEmailTaken failed");
             e.printStackTrace();
             return true;
         }
@@ -467,7 +521,7 @@ public class UserDAO {
             return false;
         }
 
-        String sql = "SELECT user_id FROM users WHERE LOWER(user_id) = LOWER(?) LIMIT 1";
+        String sql = "SELECT user_id FROM users WHERE LOWER(TRIM(user_id)) = LOWER(TRIM(?)) LIMIT 1";
 
         try (Connection connection = DBConnection.getConnection();
              PreparedStatement statement = connection.prepareStatement(sql)) {
@@ -479,6 +533,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> existsById failed for " + cleanUserId);
             e.printStackTrace();
             return false;
         }
@@ -513,24 +568,24 @@ public class UserDAO {
     }
 
     public int countByRole(ServletContext context, String role) {
-        String cleanRole = FileUtil.clean(role);
+        String cleanRole = normalizeRoleInput(role);
 
         if (cleanRole.isEmpty()) {
             return 0;
         }
 
-        String sql = "SELECT COUNT(*) FROM users WHERE LOWER(role) = LOWER(?)";
+        String sql = "SELECT COUNT(*) FROM users WHERE LOWER(TRIM(role)) = LOWER(TRIM(?))";
         return countBySingleParameterQuery(sql, cleanRole);
     }
 
     public int countByStatus(ServletContext context, String status) {
-        String cleanStatus = FileUtil.clean(status);
+        String cleanStatus = normalizeStatusInput(status);
 
         if (cleanStatus.isEmpty()) {
             return 0;
         }
 
-        String sql = "SELECT COUNT(*) FROM users WHERE LOWER(status) = LOWER(?)";
+        String sql = "SELECT COUNT(*) FROM users WHERE LOWER(TRIM(status)) = LOWER(TRIM(?))";
         return countBySingleParameterQuery(sql, cleanStatus);
     }
 
@@ -553,6 +608,7 @@ public class UserDAO {
             return statement.executeUpdate() > 0;
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> updateProfileImage failed for " + cleanUserId);
             e.printStackTrace();
             return false;
         }
@@ -568,6 +624,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> countByQuery failed");
             e.printStackTrace();
         }
 
@@ -587,6 +644,7 @@ public class UserDAO {
             }
 
         } catch (SQLException e) {
+            System.out.println("USERDAO ERROR -> countBySingleParameterQuery failed");
             e.printStackTrace();
         }
 
@@ -644,8 +702,8 @@ public class UserDAO {
         statement.setString(2, user.getUsername());
         statement.setString(3, user.getPassword());
         statement.setString(4, user.getEmail());
-        statement.setString(5, user.getRole());
-        statement.setString(6, user.getStatus());
+        statement.setString(5, normalizeRoleInput(user.getRole()));
+        statement.setString(6, normalizeStatusInput(user.getStatus()));
         statement.setString(7, user.getProfileImage());
     }
 
@@ -655,21 +713,12 @@ public class UserDAO {
                 safe(resultSet.getString("username")),
                 safe(resultSet.getString("password")),
                 safe(resultSet.getString("email")),
-                safe(resultSet.getString("role")),
-                safe(resultSet.getString("status")),
+                normalizeRoleInput(resultSet.getString("role")),
+                normalizeStatusInput(resultSet.getString("status")),
                 safe(resultSet.getString("profile_image"))
         );
     }
 
-    /**
-     * Future-ready password verification.
-     *
-     * Current compatibility:
-     * - Plain text passwords still work.
-     *
-     * Future:
-     * - Add BCrypt library and verify hashes here.
-     */
     private boolean verifyPassword(String rawPassword, String storedPassword) {
         if (rawPassword == null || storedPassword == null) {
             return false;
@@ -682,15 +731,63 @@ public class UserDAO {
             return false;
         }
 
-        /*
-         * Placeholder for future BCrypt support.
-         * Example later:
-         * if (stored.startsWith("$2a$") || stored.startsWith("$2b$")) {
-         *     return BCrypt.checkpw(raw, stored);
-         * }
-         */
-
         return stored.equals(raw);
+    }
+
+    private String normalizeRoleInput(String value) {
+        String roleValue = safe(value);
+
+        if (roleValue.equalsIgnoreCase(User.ROLE_ADMIN)
+                || roleValue.equalsIgnoreCase("admin")
+                || roleValue.equalsIgnoreCase("administrator")
+                || roleValue.equalsIgnoreCase("role_admin")) {
+            return User.ROLE_ADMIN;
+        }
+
+        if (roleValue.equalsIgnoreCase(User.ROLE_LECTURER)
+                || roleValue.equalsIgnoreCase("lecturer")
+                || roleValue.equalsIgnoreCase("teacher")
+                || roleValue.equalsIgnoreCase("role_lecturer")) {
+            return User.ROLE_LECTURER;
+        }
+
+        if (roleValue.equalsIgnoreCase(User.ROLE_STUDENT)
+                || roleValue.equalsIgnoreCase("student")
+                || roleValue.equalsIgnoreCase("role_student")) {
+            return User.ROLE_STUDENT;
+        }
+
+        return roleValue;
+    }
+
+    private String normalizeStatusInput(String value) {
+        String statusValue = safe(value);
+
+        if (statusValue.equalsIgnoreCase(User.STATUS_ACTIVE)
+                || statusValue.equalsIgnoreCase("active")
+                || statusValue.equalsIgnoreCase("enabled")) {
+            return User.STATUS_ACTIVE;
+        }
+
+        if (statusValue.equalsIgnoreCase(User.STATUS_INACTIVE)
+                || statusValue.equalsIgnoreCase("inactive")
+                || statusValue.equalsIgnoreCase("disabled")) {
+            return User.STATUS_INACTIVE;
+        }
+
+        if (statusValue.equalsIgnoreCase(User.STATUS_SUSPENDED)
+                || statusValue.equalsIgnoreCase("suspended")
+                || statusValue.equalsIgnoreCase("blocked")) {
+            return User.STATUS_SUSPENDED;
+        }
+
+        return statusValue;
+    }
+
+    private void debug(String message) {
+        if (DEBUG_LOGIN) {
+            System.out.println(message);
+        }
     }
 
     private String safe(String value) {
