@@ -122,6 +122,20 @@ CREATE TABLE IF NOT EXISTS notices (
                                        status VARCHAR(30) NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS result_appeals (
+                                              appeal_id VARCHAR(30) PRIMARY KEY,
+                                              result_id VARCHAR(30) NOT NULL,
+                                              exam_id VARCHAR(30) NOT NULL,
+                                              student_id VARCHAR(30) NOT NULL,
+                                              student_name VARCHAR(120) NOT NULL,
+                                              reason_type VARCHAR(60) NOT NULL,
+                                              message TEXT NOT NULL,
+                                              status VARCHAR(30) NOT NULL,
+                                              staff_reply TEXT,
+                                              created_at DATETIME NOT NULL,
+                                              updated_at DATETIME NOT NULL,
+                                              reviewed_by VARCHAR(80) DEFAULT ''
+);
 
 INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
 VALUES
