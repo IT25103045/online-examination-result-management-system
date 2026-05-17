@@ -93,7 +93,9 @@
         <button class="btn btn-outline-primary mobile-menu-btn"
                 id="mobileMenuBtn"
                 type="button"
-                aria-label="Open sidebar menu">
+                aria-label="Open sidebar menu"
+                aria-controls="sidebar"
+                aria-expanded="false">
             <i class="bi bi-list"></i>
         </button>
 

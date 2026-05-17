@@ -1,5 +1,6 @@
 package lk.nextexam.servlet;
-
+import lk.nextexam.dao.AuditLogDAO;
+import lk.nextexam.model.AuditLog;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,6 +30,7 @@ public class PublishResultServlet extends HttpServlet {
 
     private static final String ROLE_ADMIN = "Admin";
     private static final String ROLE_LECTURER = "Lecturer";
+    private final AuditLogDAO auditLogDAO = new AuditLogDAO();
 
     private final ExamSubmissionDAO submissionDAO = new ExamSubmissionDAO();
 
@@ -82,6 +84,14 @@ public class PublishResultServlet extends HttpServlet {
         boolean published = submissionDAO.publishSubmission(getServletContext(), submissionId);
 
         if (published) {
+            auditLogDAO.logAction(
+                    getServletContext(),
+                    request,
+                    "PUBLISH_RESULT",
+                    AuditLog.MODULE_RESULTS,
+                    "Published result for submission " + submissionId + ".",
+                    AuditLog.STATUS_SUCCESS
+            );
             redirectToSubmissions(request, response, "success", "resultPublished");
         } else {
             redirectToSubmissions(request, response, "error", "publishFailed");

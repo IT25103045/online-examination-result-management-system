@@ -3,10 +3,10 @@
         crossorigin="anonymous"></script>
 
 <!-- Main Application JavaScript -->
-<script src="<%= request.getContextPath() %>/js/app.js?v=professional-final-2"></script>
+<script src="<%= request.getContextPath() %>/js/app.js?v=final-ui-mobile-polish-1"></script>
 
 <!-- Reusable Advanced Search and Filtering -->
-<script src="<%= request.getContextPath() %>/js/table-filters.js?v=advanced-filtering-1"></script>
+<script src="<%= request.getContextPath() %>/js/table-filters.js?v=advanced-filtering-2"></script>
 
 </body>
 </html>

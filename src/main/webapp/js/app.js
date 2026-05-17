@@ -19,6 +19,14 @@ const NextExamApp = {
         this.enableTopbarQuickSearch();
         this.enableAutoCloseAlerts();
         this.enableModalFocusFix();
+
+        /*
+         * Pack 20 final UI polish.
+         * Safe methods only.
+         * Sidebar auto-scroll is intentionally removed because it can jam/jump
+         * when the sidebar has many menu items.
+         */
+        this.enableFinalUIPolish();
     },
 
     /* -------------------------------------------------------
@@ -60,7 +68,10 @@ const NextExamApp = {
         menuBtn.addEventListener("click", function () {
             sidebar.classList.add("show");
             backdrop.classList.add("show");
+
+            document.body.classList.add("sidebar-open");
             document.body.style.overflow = "hidden";
+
             menuBtn.setAttribute("aria-expanded", "true");
         });
 
@@ -70,7 +81,9 @@ const NextExamApp = {
 
         document.querySelectorAll(".sidebar-link").forEach(function (link) {
             link.addEventListener("click", function () {
-                NextExamApp.closeMobileSidebar(sidebar, backdrop, menuBtn);
+                if (window.innerWidth <= 991) {
+                    NextExamApp.closeMobileSidebar(sidebar, backdrop, menuBtn);
+                }
             });
         });
 
@@ -100,6 +113,7 @@ const NextExamApp = {
             menuBtn.setAttribute("aria-expanded", "false");
         }
 
+        document.body.classList.remove("sidebar-open");
         document.body.style.overflow = "";
     },
 
@@ -570,21 +584,35 @@ const NextExamApp = {
             { keyword: "dashboard", url: "dashboard.jsp" },
             { keyword: "student", url: "students" },
             { keyword: "faculty", url: "faculties" },
+            { keyword: "programme", url: "programmes" },
+            { keyword: "program", url: "programmes" },
+            { keyword: "batch", url: "batches" },
+            { keyword: "module", url: "modules" },
             { keyword: "exam", url: "exams" },
             { keyword: "question", url: "questions" },
+            { keyword: "submission", url: "submissions" },
             { keyword: "result", url: "results" },
+            { keyword: "appeal", url: "result-appeals" },
+            { keyword: "report", url: "reports" },
+            { keyword: "notification", url: "notifications" },
+            { keyword: "audit", url: "audit-logs" },
             { keyword: "user", url: "users" },
             { keyword: "notice", url: "notices" },
-            { keyword: "feedback", url: "feedback" }
+            { keyword: "feedback", url: "feedback" },
+            { keyword: "integrity", url: "integrity" }
         ];
 
         const studentRoutes = [
+            { keyword: "dashboard", url: "dashboard.jsp" },
             { keyword: "my result", url: "my-results" },
             { keyword: "result", url: "my-results" },
             { keyword: "exam", url: "my-exams" },
             { keyword: "my exam", url: "my-exams" },
+            { keyword: "appeal", url: "result-appeals" },
+            { keyword: "notification", url: "notifications" },
             { keyword: "notice", url: "notices" },
-            { keyword: "feedback", url: "feedback" }
+            { keyword: "feedback", url: "feedback" },
+            { keyword: "profile", url: "profile" }
         ];
 
         const routes = currentRole === "student" ? studentRoutes : staffRoutes;
@@ -678,6 +706,146 @@ const NextExamApp = {
                     activeElement.blur();
                 }
             });
+        });
+    },
+
+    /* -------------------------------------------------------
+       14. Pack 20 Final UI Polish
+    ------------------------------------------------------- */
+    enableFinalUIPolish: function () {
+        this.enableTopbarScrolledState();
+        this.enableTableScrollHints();
+        this.enablePreventDoubleSubmit();
+        this.enableMobileTableLabels();
+        this.enableModalMobileFocus();
+        this.enableResponsiveSidebarCleanup();
+        this.enableSafeLayoutClasses();
+    },
+
+    enableTopbarScrolledState: function () {
+        const topbar = document.querySelector(".topbar");
+
+        if (!topbar) {
+            return;
+        }
+
+        function updateTopbar() {
+            if (window.scrollY > 8) {
+                topbar.classList.add("topbar-scrolled");
+            } else {
+                topbar.classList.remove("topbar-scrolled");
+            }
+        }
+
+        window.addEventListener("scroll", updateTopbar, { passive: true });
+        updateTopbar();
+    },
+
+    enableTableScrollHints: function () {
+        function updateTables() {
+            document.querySelectorAll(".table-responsive").forEach(function (wrapper) {
+                if (wrapper.scrollWidth > wrapper.clientWidth) {
+                    wrapper.classList.add("has-horizontal-scroll");
+                } else {
+                    wrapper.classList.remove("has-horizontal-scroll");
+                    wrapper.classList.remove("is-scrolled");
+                }
+            });
+        }
+
+        document.querySelectorAll(".table-responsive").forEach(function (wrapper) {
+            wrapper.addEventListener("scroll", function () {
+                if (wrapper.scrollLeft > 4) {
+                    wrapper.classList.add("is-scrolled");
+                } else {
+                    wrapper.classList.remove("is-scrolled");
+                }
+            });
+        });
+
+        window.addEventListener("resize", updateTables);
+        updateTables();
+    },
+
+    enablePreventDoubleSubmit: function () {
+        document.querySelectorAll("form[data-prevent-double-submit='true']").forEach(function (form) {
+            form.addEventListener("submit", function () {
+                const submitButton = form.querySelector("button[type='submit']");
+
+                if (submitButton) {
+                    submitButton.disabled = true;
+                    submitButton.classList.add("disabled");
+                    submitButton.setAttribute("data-original-text", submitButton.innerHTML);
+                    submitButton.innerHTML = "<i class='bi bi-hourglass-split me-1'></i> Processing...";
+                }
+            });
+        });
+    },
+
+    enableMobileTableLabels: function () {
+        document.querySelectorAll("table").forEach(function (table) {
+            const headers = Array.from(table.querySelectorAll("thead th")).map(function (th) {
+                return th.innerText.trim();
+            });
+
+            if (headers.length === 0) {
+                return;
+            }
+
+            table.querySelectorAll("tbody tr").forEach(function (row) {
+                Array.from(row.children).forEach(function (cell, index) {
+                    if (!cell.getAttribute("data-label") && headers[index]) {
+                        cell.setAttribute("data-label", headers[index]);
+                    }
+                });
+            });
+        });
+    },
+
+    enableModalMobileFocus: function () {
+        document.querySelectorAll(".modal").forEach(function (modal) {
+            modal.addEventListener("shown.bs.modal", function () {
+                const firstInput = modal.querySelector("input:not([type='hidden']), textarea, select");
+
+                if (firstInput && window.innerWidth > 768) {
+                    firstInput.focus();
+                }
+            });
+        });
+    },
+
+    enableResponsiveSidebarCleanup: function () {
+        const sidebar = document.getElementById("sidebar");
+        const backdrop = document.getElementById("sidebarBackdrop");
+        const menuBtn = document.getElementById("mobileMenuBtn");
+
+        window.addEventListener("resize", function () {
+            if (window.innerWidth > 991) {
+                if (sidebar) {
+                    sidebar.classList.remove("show");
+                }
+
+                if (backdrop) {
+                    backdrop.classList.remove("show");
+                }
+
+                if (menuBtn) {
+                    menuBtn.setAttribute("aria-expanded", "false");
+                }
+
+                document.body.classList.remove("sidebar-open");
+                document.body.style.overflow = "";
+            }
+        });
+    },
+
+    enableSafeLayoutClasses: function () {
+        document.querySelectorAll(".crud-toolbar, .page-header, .topbar, .hero-card").forEach(function (element) {
+            element.classList.add("layout-safe-wrap");
+        });
+
+        document.querySelectorAll(".app-card, .quick-card, .stat-card, .hero-card").forEach(function (element) {
+            element.classList.add("layout-safe-card");
         });
     },
 

@@ -5960,3 +5960,616 @@ strong {
         grid-template-columns: 1fr;
     }
 }
+
+
+/* =========================================================
+   PACK 20 - FINAL UI/UX POLISH + MOBILE OPTIMIZATION
+   Safe final responsive layer
+   ========================================================= */
+
+/* Prevent any module from causing page-wide horizontal overflow */
+html,
+body,
+.app-shell,
+.main-content,
+.page-wrapper {
+    max-width: 100%;
+}
+
+body.ui-polish-ready {
+    text-rendering: optimizeLegibility;
+}
+
+/* Sidebar: stable full-height scroll for many modules */
+.sidebar {
+    height: 100vh;
+    max-height: 100vh;
+    overscroll-behavior: contain;
+    scroll-behavior: smooth;
+}
+
+.sidebar-menu {
+    min-height: 0;
+}
+
+.sidebar-link span {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.sidebar-note {
+    flex-shrink: 0;
+}
+
+/* Topbar: stronger responsive stability */
+.topbar {
+    transition: box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.topbar.is-scrolled {
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+}
+
+.topbar-left,
+.topbar-title-wrap {
+    min-width: 0;
+}
+
+.notification-btn {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 15px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--primary-light);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    box-shadow: var(--shadow-xs);
+    transition: all 0.18s ease;
+}
+
+.notification-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+    color: var(--primary);
+}
+
+.notification-count {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--danger);
+    color: #ffffff;
+    font-size: 10px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #ffffff;
+}
+
+/* Global flex safety */
+.ui-polish-flex-safe,
+.page-header,
+.crud-toolbar,
+.action-group,
+.topbar-actions,
+.hero-card .d-flex,
+.app-card .d-flex {
+    min-width: 0;
+}
+
+.hero-card .btn,
+.page-header .btn,
+.crud-toolbar .btn,
+.action-group .btn {
+    white-space: nowrap;
+}
+
+/* Dashboard: role-based layouts should not jam */
+.dashboard-analytics-grid,
+.lecturer-analytics-grid,
+.student-academic-grid,
+.student-progress-grid {
+    min-width: 0;
+}
+
+.dashboard-analytics-tile,
+.priority-task-item,
+.student-academic-tile,
+.student-priority-item,
+.lecturer-summary-item {
+    min-width: 0;
+}
+
+.dashboard-analytics-tile > div,
+.priority-task-item > div,
+.student-academic-tile > div,
+.student-priority-item > div,
+.lecturer-summary-item > div {
+    min-width: 0;
+}
+
+/* Tables: final overflow polish */
+.table-responsive {
+    position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-gutter: stable;
+}
+
+.table-responsive.has-horizontal-scroll::after {
+    content: "Scroll horizontally →";
+    position: sticky;
+    left: 100%;
+    bottom: 0;
+    display: inline-block;
+    margin: 8px;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 850;
+    box-shadow: var(--shadow-xs);
+    pointer-events: none;
+}
+
+.table td,
+.table th {
+    max-width: 420px;
+}
+
+.table td:last-child {
+    min-width: 110px;
+}
+
+.table .btn,
+.table form .btn {
+    white-space: nowrap;
+}
+
+/* Forms and toolbars */
+.crud-toolbar .form-control,
+.crud-toolbar .form-select,
+.page-header .form-control,
+.page-header .form-select {
+    min-width: 0;
+}
+
+.crud-toolbar .d-flex,
+.page-header .d-flex {
+    min-width: 0;
+}
+
+/* Modals */
+.modal {
+    overflow-x: hidden;
+}
+
+.modal-body {
+    overscroll-behavior: contain;
+}
+
+.modal-footer {
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.modal-footer .btn {
+    white-space: nowrap;
+}
+
+/* Long content protection */
+.card,
+.app-card,
+.hero-card,
+.stat-card,
+.quick-card,
+.notice-card,
+.feedback-card,
+.notification-item,
+.report-export-card {
+    min-width: 0;
+}
+
+.badge,
+.btn,
+.form-control,
+.form-select {
+    max-width: 100%;
+}
+
+.badge {
+    white-space: normal;
+    text-align: center;
+}
+
+/* Touch improvements */
+.btn,
+.sidebar-link,
+.quick-card,
+.priority-task-item,
+.notification-btn {
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Laptop and tablet polish */
+@media (max-width: 1199px) {
+    .topbar-user {
+        max-width: 160px;
+    }
+
+    .hero-card > .d-flex,
+    .page-header {
+        align-items: flex-start !important;
+    }
+}
+
+@media (max-width: 991px) {
+    .sidebar {
+        width: min(86vw, var(--sidebar-width));
+        padding-bottom: 22px;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+
+    .topbar {
+        gap: 10px;
+    }
+
+    .topbar-actions {
+        flex-wrap: nowrap;
+    }
+
+    .hero-card .d-flex > .d-flex,
+    .page-header > .d-flex {
+        width: 100%;
+        justify-content: flex-start;
+    }
+
+    .hero-card .btn {
+        flex: 1 1 180px;
+    }
+
+    .crud-toolbar .d-flex {
+        width: 100%;
+    }
+
+    .crud-toolbar .input-group,
+    .crud-toolbar .form-select,
+    .crud-toolbar .btn {
+        max-width: 100% !important;
+    }
+
+    .table-responsive {
+        border-radius: 18px;
+    }
+
+    .modal-dialog {
+        margin: 12px auto;
+    }
+}
+
+/* Phone polish */
+@media (max-width: 576px) {
+    .topbar {
+        padding: 12px 14px;
+        align-items: center;
+    }
+
+    .topbar-left {
+        flex: 1 1 auto;
+        gap: 9px !important;
+    }
+
+    .topbar-title-wrap {
+        max-width: calc(100vw - 170px);
+    }
+
+    .topbar-subtitle {
+        display: none;
+    }
+
+    .notification-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        border-radius: 13px;
+    }
+
+    .topbar-actions {
+        gap: 6px;
+    }
+
+    .page-wrapper {
+        padding: 12px;
+    }
+
+    .hero-card {
+        margin-bottom: 14px !important;
+    }
+
+    .hero-card .btn,
+    .page-header .btn,
+    .crud-toolbar .btn,
+    .action-group .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .stat-card {
+        border-radius: 20px;
+    }
+
+    .stat-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 16px;
+        font-size: 18px;
+    }
+
+    .quick-card,
+    .student-quick-card,
+    .lecturer-quick-card {
+        min-height: auto;
+    }
+
+    .priority-task-item,
+    .student-priority-item {
+        align-items: flex-start;
+        border-radius: 18px;
+    }
+
+    .priority-task-item > i,
+    .student-priority-item > i {
+        margin-top: 4px;
+    }
+
+    .table-responsive.has-horizontal-scroll::after {
+        content: "Swipe table →";
+        left: auto;
+        right: 0;
+        font-size: 10px;
+    }
+
+    .modal-content {
+        border-radius: 18px;
+    }
+
+    .modal-header,
+    .modal-body,
+    .modal-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .modal-footer .btn {
+        width: 100%;
+    }
+}
+
+@media (max-width: 420px) {
+    .topbar-title-wrap {
+        max-width: calc(100vw - 145px);
+    }
+
+    .topbar-actions .btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-title,
+    .page-title {
+        font-size: 20px;
+    }
+
+    .stat-value {
+        font-size: 25px;
+    }
+
+    .table {
+        min-width: 680px;
+    }
+}
+/* ================================
+   Sidebar Jam Fix - Final Safe Patch
+================================ */
+.sidebar {
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-menu {
+    flex: 1 1 auto;
+    min-height: 0;
+    padding-bottom: 18px;
+}
+
+.sidebar-link {
+    min-height: 44px;
+    height: auto;
+    padding-top: 11px;
+    padding-bottom: 11px;
+    line-height: 1.25;
+}
+
+.sidebar-link span {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+.sidebar-note {
+    flex-shrink: 0;
+    margin-bottom: 12px;
+}
+
+.sidebar-backdrop {
+    cursor: pointer;
+}
+
+body.sidebar-open {
+    overflow: hidden;
+    touch-action: none;
+}
+
+@media (max-width: 991px) {
+    .sidebar {
+        width: min(290px, 86vw);
+        height: 100dvh;
+        max-height: 100dvh;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .sidebar.show {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 420px) {
+    .sidebar {
+        width: min(280px, 88vw);
+        padding: 16px 13px;
+    }
+
+    .sidebar-link {
+        font-size: 12.5px;
+        border-radius: 14px;
+    }
+
+    .sidebar-label {
+        margin-top: 16px;
+    }
+}
+
+/* ================================
+   Final Sidebar Scroll Fix
+   Fixes sidebar jamming after Pack 20
+================================ */
+.sidebar {
+    height: 100vh !important;
+    max-height: 100vh !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+.sidebar-brand {
+    flex: 0 0 auto !important;
+}
+
+.sidebar-scroll-area {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 2px;
+    padding-bottom: 16px;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.sidebar-scroll-area::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-scroll-area::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.35);
+    border-radius: 999px;
+}
+
+.sidebar-menu {
+    flex: unset !important;
+    min-height: auto !important;
+    padding-top: 4px;
+    padding-bottom: 10px;
+}
+
+.sidebar-profile {
+    flex: 0 0 auto !important;
+}
+
+.sidebar-note {
+    flex: 0 0 auto !important;
+    margin-top: 16px;
+    margin-bottom: 12px;
+}
+
+.sidebar-link {
+    min-height: 44px;
+    height: auto !important;
+    line-height: 1.25;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
+
+.sidebar-link span {
+    min-width: 0;
+    white-space: normal;
+    overflow-wrap: anywhere;
+}
+
+body.sidebar-open {
+    overflow: hidden !important;
+    touch-action: none;
+}
+
+@media (max-width: 991px) {
+    .sidebar {
+        width: min(290px, 86vw) !important;
+        height: 100dvh !important;
+        max-height: 100dvh !important;
+        transform: translateX(-100%);
+    }
+
+    .sidebar.show {
+        transform: translateX(0) !important;
+    }
+
+    .sidebar-scroll-area {
+        max-height: calc(100dvh - 82px);
+    }
+}
+
+@media (max-width: 420px) {
+    .sidebar {
+        width: min(280px, 88vw) !important;
+        padding: 16px 13px !important;
+    }
+
+    .sidebar-link {
+        font-size: 12.5px;
+        border-radius: 14px;
+    }
+
+    .sidebar-label {
+        margin-top: 16px;
+    }
+}

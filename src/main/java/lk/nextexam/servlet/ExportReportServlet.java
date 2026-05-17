@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import lk.nextexam.dao.AuditLogDAO;
+import lk.nextexam.model.AuditLog;
 
 /**
  * ExportReportServlet exports system records as CSV files.
@@ -61,6 +63,7 @@ public class ExportReportServlet extends HttpServlet {
     private final ResultAppealDAO appealDAO = new ResultAppealDAO();
     private final NotificationDAO notificationDAO = new NotificationDAO();
     private final FeedbackDAO feedbackDAO = new FeedbackDAO();
+    private final AuditLogDAO auditLogDAO = new AuditLogDAO();
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -77,6 +80,15 @@ public class ExportReportServlet extends HttpServlet {
         }
 
         String type = FileUtil.clean(request.getParameter("type")).toLowerCase();
+
+        auditLogDAO.logAction(
+                getServletContext(),
+                request,
+                "EXPORT_REPORT",
+                AuditLog.MODULE_REPORTS,
+                "Staff exported " + type + " CSV report.",
+                AuditLog.STATUS_SUCCESS
+        );
 
         if (type.isEmpty()) {
             response.sendRedirect(request.getContextPath() + "/reports?error=missingType");
