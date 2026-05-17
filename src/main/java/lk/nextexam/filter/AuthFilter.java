@@ -66,6 +66,9 @@ import java.util.Set;
 
         "/export-report",
 
+        "/audit-logs",
+        "/audit-logs/index.jsp",
+
         "/faculties",
         "/faculties/index.jsp",
 
@@ -187,6 +190,9 @@ public class AuthFilter implements Filter {
     private static final Set<String> ADMIN_ROUTES = setOf(
             "/users",
             "/users/index.jsp",
+
+            "/audit-logs",
+            "/audit-logs/index.jsp",
 
             "/settings",
             "/settings/index.jsp"

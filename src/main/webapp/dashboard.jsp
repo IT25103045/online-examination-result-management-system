@@ -829,6 +829,19 @@
                             </div>
 
                             <div class="col-md-6 col-xl-4">
+                                <a href="<%= request.getContextPath() %>/audit-logs">
+                                    <div class="app-card quick-card">
+                                        <div class="quick-icon">
+                                            <i class="bi bi-shield-lock-fill"></i>
+                                        </div>
+
+                                        <h5>Audit Logs</h5>
+                                        <p>Review important system activity, report exports, access events, and staff actions.</p>
+                                    </div>
+                                </a>
+                            </div>
+
+                            <div class="col-md-6 col-xl-4">
                                 <a href="<%= request.getContextPath() %>/feedback">
                                     <div class="app-card quick-card">
                                         <div class="quick-icon">

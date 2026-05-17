@@ -337,6 +337,11 @@
                 <i class="bi bi-person-gear"></i>
                 <span>Users & Roles</span>
             </a>
+            <a class="sidebar-link <%= "audit-logs".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/audit-logs">
+                <i class="bi bi-shield-lock-fill"></i>
+                <span>Audit Logs</span>
+            </a>
 
             <% if (showAcademicExpansion) { %>
                 <a class="sidebar-link <%= "settings".equals(sbActiveMenu) ? "active" : "" %>"
