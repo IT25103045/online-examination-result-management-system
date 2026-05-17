@@ -5870,3 +5870,93 @@ strong {
         align-items: flex-start;
     }
 }
+
+/* ================================
+   Pack 19 - Student Academic Dashboard
+================================ */
+.student-hero-card {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.14), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(22, 163, 74, 0.09), transparent 32%),
+        linear-gradient(135deg, #ffffff, #f8fafc);
+}
+
+.student-stat-card {
+    border-color: #bfdbfe;
+}
+
+.student-priority-card,
+.student-progress-card {
+    overflow: hidden;
+}
+
+.student-priority-list {
+    gap: 13px;
+}
+
+.student-analytics-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.student-quick-card {
+    height: 100%;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34%),
+        #ffffff;
+}
+
+.student-summary-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.student-summary-item {
+    padding: 15px;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.07), transparent 34%),
+        #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+.student-summary-item small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 5px;
+}
+
+.student-summary-item strong {
+    display: block;
+    color: var(--dark);
+    font-size: 15px;
+    font-weight: 950;
+    line-height: 1.35;
+}
+
+.student-summary-item span {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-top: 5px;
+}
+
+/* Add success priority card variant if not already present */
+.priority-task-item.success {
+    border-color: #bbf7d0;
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.09), transparent 34%),
+        #ffffff;
+}
+
+@media (max-width: 768px) {
+    .student-analytics-grid {
+        grid-template-columns: 1fr;
+    }
+}

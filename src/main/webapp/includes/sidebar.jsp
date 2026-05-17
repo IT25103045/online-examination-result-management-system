@@ -99,6 +99,12 @@
         <% } %>
 
         <% if (sbIsStudent) { %>
+            <a class="sidebar-link <%= "dashboard".equals(sbActiveMenu) ? "active" : "" %>"
+               href="<%= request.getContextPath() %>/dashboard.jsp">
+                <i class="bi bi-grid-1x2-fill"></i>
+                <span>Dashboard</span>
+            </a>
+
             <a class="sidebar-link <%= "my-exams".equals(sbActiveMenu) ? "active" : "" %>"
                href="<%= request.getContextPath() %>/my-exams">
                 <i class="bi bi-laptop-fill"></i>

@@ -1,8 +1,8 @@
 <%--
     Main dashboard page for Nextexam.
 
-    Enhancement Pack 18:
-    Lecturer Workload Dashboard Upgrade
+    Enhancement Pack 19:
+    Student Academic Dashboard Upgrade
 
     This dashboard now supports:
     - Admin executive analytics dashboard
@@ -12,6 +12,8 @@
     - Result appeal queue
     - Notification and feedback workload
     - Role-based quick actions
+    - Student academic dashboard
+    - Student exam/result/appeal/notification overview
 
     Responsible Member:
     IT25103045 - De Silva H.L.D.C.P.C
@@ -40,6 +42,8 @@
 <%@ page import="lk.nextexam.model.User" %>
 <%@ page import="lk.nextexam.model.Notice" %>
 <%@ page import="lk.nextexam.model.ResultAppeal" %>
+<%@ page import="lk.nextexam.model.ExamSubmission" %>
+<%@ page import="lk.nextexam.model.Feedback" %>
 
 <%
     String pageTitle = "Dashboard";
@@ -70,9 +74,10 @@
 
     boolean isAdmin = "Admin".equalsIgnoreCase(sessionRole);
     boolean isLecturer = "Lecturer".equalsIgnoreCase(sessionRole);
+    boolean isStudent = "Student".equalsIgnoreCase(sessionRole);
 
-    if (!isAdmin && !isLecturer) {
-        response.sendRedirect(request.getContextPath() + "/my-exams?error=accessDenied");
+    if (!isAdmin && !isLecturer && !isStudent) {
+        response.sendRedirect(request.getContextPath() + "/login.jsp?error=accessDenied");
         return;
     }
 
@@ -230,6 +235,106 @@
                 ? "badge-soft-warning"
                 : "badge-soft-danger";
 
+    /* ================================
+       Student Academic Dashboard Data
+    ================================ */
+    List<Exam> studentAttemptableExamList = examDAO.getAttemptableExams(application);
+    List<ExamSubmission> studentSubmissionList = submissionDAO.getSubmissionsByStudent(application, sessionUserId);
+    List<Result> studentPublishedResultList = resultDAO.getPublishedResultsByStudentId(application, sessionUserId);
+    List<ResultAppeal> studentAppealList = appealDAO.getAppealsByStudent(application, sessionUserId);
+    List<Feedback> studentFeedbackList = feedbackDAO.getFeedbackByStudentId(application, sessionUserId);
+    List<Notice> studentNoticeList = noticeDAO.getVisibleNoticesForRole(application, "Student");
+
+    int studentSubmittedAttempts = studentSubmissionList != null ? studentSubmissionList.size() : 0;
+    int studentPublishedResults = studentPublishedResultList != null ? studentPublishedResultList.size() : 0;
+    int studentTotalAppeals = studentAppealList != null ? studentAppealList.size() : 0;
+    int studentFeedbackCount = studentFeedbackList != null ? studentFeedbackList.size() : 0;
+
+    int studentAvailableExams = 0;
+    int studentOpenFeedback = 0;
+    int studentPendingAppeals = 0;
+    int studentUnderReviewAppeals = 0;
+    int studentResolvedAppeals = 0;
+    int studentRejectedAppeals = 0;
+    int studentResultMarksTotal = 0;
+
+    if (studentAttemptableExamList != null) {
+        for (Exam exam : studentAttemptableExamList) {
+            if (exam != null && !submissionDAO.hasStudentSubmitted(application, sessionUserId, exam.getExamId())) {
+                studentAvailableExams++;
+            }
+        }
+    }
+
+    if (studentFeedbackList != null) {
+        for (Feedback feedback : studentFeedbackList) {
+            if (feedback != null && feedback.isOpen()) {
+                studentOpenFeedback++;
+            }
+        }
+    }
+
+    if (studentAppealList != null) {
+        for (ResultAppeal appeal : studentAppealList) {
+            if (appeal == null) {
+                continue;
+            }
+
+            if (ResultAppeal.STATUS_PENDING.equalsIgnoreCase(appeal.getStatus())) {
+                studentPendingAppeals++;
+            } else if (ResultAppeal.STATUS_UNDER_REVIEW.equalsIgnoreCase(appeal.getStatus())) {
+                studentUnderReviewAppeals++;
+            } else if (ResultAppeal.STATUS_RESOLVED.equalsIgnoreCase(appeal.getStatus())) {
+                studentResolvedAppeals++;
+            } else if (ResultAppeal.STATUS_REJECTED.equalsIgnoreCase(appeal.getStatus())) {
+                studentRejectedAppeals++;
+            }
+        }
+    }
+
+    if (studentPublishedResultList != null) {
+        for (Result result : studentPublishedResultList) {
+            try {
+                studentResultMarksTotal += Integer.parseInt(result.getMarks());
+            } catch (Exception e) {
+                studentResultMarksTotal += 0;
+            }
+        }
+    }
+
+    int studentAverageMarks = studentPublishedResults > 0 ? studentResultMarksTotal / studentPublishedResults : 0;
+    int studentAcademicItems = studentAvailableExams + studentSubmittedAttempts;
+    int studentExamCompletionRate = studentAcademicItems > 0 ? (studentSubmittedAttempts * 100) / studentAcademicItems : 0;
+    int studentResultPublishRate = studentSubmittedAttempts > 0 ? (studentPublishedResults * 100) / studentSubmittedAttempts : 0;
+    int studentAppealResolutionRate = studentTotalAppeals > 0
+            ? ((studentResolvedAppeals + studentRejectedAppeals) * 100) / studentTotalAppeals
+            : 0;
+    int currentStudentTotalNotifications = notificationDAO.countAllForUser(application, sessionUserId, sessionRole);
+    int currentStudentUnreadNotifications = notificationDAO.countUnreadForUser(application, sessionUserId, sessionRole);
+    int studentNotificationReadRate = currentStudentTotalNotifications > 0
+            ? ((currentStudentTotalNotifications - currentStudentUnreadNotifications) * 100) / currentStudentTotalNotifications
+            : 0;
+
+    int studentPriorityScore = studentAvailableExams + studentPendingAppeals + studentUnreadNotifications + studentOpenFeedback;
+
+    String studentPriorityLabel = studentPriorityScore == 0
+            ? "Clear"
+            : studentPriorityScore <= 4
+                ? "Good Progress"
+                : "Needs Attention";
+
+    String studentPriorityBadge = studentPriorityScore == 0
+            ? "badge-soft-success"
+            : studentPriorityScore <= 4
+                ? "badge-soft-warning"
+                : "badge-soft-danger";
+
+    Notice latestStudentNotice = null;
+
+    if (studentNoticeList != null && !studentNoticeList.isEmpty()) {
+        latestStudentNotice = studentNoticeList.get(studentNoticeList.size() - 1);
+    }
+
     Notice latestNotice = null;
 
     if (notices != null && !notices.isEmpty()) {
@@ -260,7 +365,393 @@
 
         <section class="page-wrapper">
 
-            <% if (isLecturer) { %>
+            <% if (isStudent) { %>
+
+                <!-- Student Dashboard Hero -->
+                <div class="hero-card student-hero-card mb-4">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div>
+                            <span class="badge badge-soft-primary mb-3">
+                                <i class="bi bi-mortarboard-fill me-1"></i>
+                                Student Academic Dashboard
+                            </span>
+
+                            <h1 class="hero-title">Welcome, <%= FileUtil.h(userDisplayName) %></h1>
+
+                            <p class="hero-text">
+                                View available exams, track submitted attempts, check published results,
+                                follow result appeals, read notices, and manage academic support from one workspace.
+                            </p>
+                        </div>
+
+                        <div class="d-flex gap-2 flex-wrap">
+                            <a href="<%= request.getContextPath() %>/my-exams" class="btn btn-primary">
+                                <i class="bi bi-laptop-fill me-2"></i>
+                                My Exams
+                            </a>
+
+                            <a href="<%= request.getContextPath() %>/my-results" class="btn btn-outline-primary">
+                                <i class="bi bi-bar-chart-fill me-2"></i>
+                                My Results
+                            </a>
+
+                            <a href="<%= request.getContextPath() %>/notifications" class="btn btn-outline-primary">
+                                <i class="bi bi-bell-fill me-2"></i>
+                                Notifications
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student KPI Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6 col-xl-3">
+                        <div class="app-card stat-card student-stat-card">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="stat-label">Available Exams</div>
+                                    <div class="stat-value"><%= studentAvailableExams %></div>
+                                    <div class="stat-meta">Ready for your attempt</div>
+                                </div>
+
+                                <div class="stat-icon">
+                                    <i class="bi bi-laptop-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-xl-3">
+                        <div class="app-card stat-card student-stat-card">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="stat-label">My Submissions</div>
+                                    <div class="stat-value"><%= studentSubmittedAttempts %></div>
+                                    <div class="stat-meta">Submitted exam attempts</div>
+                                </div>
+
+                                <div class="stat-icon">
+                                    <i class="bi bi-send-check-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-xl-3">
+                        <div class="app-card stat-card student-stat-card">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="stat-label">Published Results</div>
+                                    <div class="stat-value"><%= studentPublishedResults %></div>
+                                    <div class="stat-meta">Average marks: <%= studentAverageMarks %>%</div>
+                                </div>
+
+                                <div class="stat-icon">
+                                    <i class="bi bi-bar-chart-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 col-xl-3">
+                        <div class="app-card stat-card student-stat-card">
+                            <div class="d-flex justify-content-between gap-3">
+                                <div>
+                                    <div class="stat-label">Academic Alerts</div>
+                                    <div class="stat-value"><%= studentPriorityScore %></div>
+                                    <div class="stat-meta"><%= currentStudentUnreadNotifications %>> unread · <%= studentPendingAppeals %> appeals</div>
+                                </div>
+
+                                <div class="stat-icon">
+                                    <i class="bi bi-bell-fill"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Main Academic Overview -->
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-5">
+                        <div class="app-card p-4 h-100 student-priority-card">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                                <div>
+                                    <h4 class="fw-bold mb-1">Student Priority Queue</h4>
+                                    <p class="text-secondary mb-0">
+                                        Your most important academic actions are shown here.
+                                    </p>
+                                </div>
+
+                                <span class="badge <%= studentPriorityBadge %>">
+                                    <i class="bi bi-lightning-charge-fill me-1"></i>
+                                    <%= studentPriorityLabel %>
+                                </span>
+                            </div>
+
+                            <div class="priority-task-list student-priority-list">
+                                <a href="<%= request.getContextPath() %>/my-exams" class="priority-task-item primary">
+                                    <div>
+                                        <small>Available Exams</small>
+                                        <strong><%= studentAvailableExams %></strong>
+                                        <span>Exams currently available for you to attempt</span>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+
+                                <a href="<%= request.getContextPath() %>/my-results" class="priority-task-item success">
+                                    <div>
+                                        <small>Published Results</small>
+                                        <strong><%= studentPublishedResults %></strong>
+                                        <span>Results released by academic staff</span>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+
+                                <a href="<%= request.getContextPath() %>/result-appeals" class="priority-task-item warning">
+                                    <div>
+                                        <small>Pending Appeals</small>
+                                        <strong><%= studentPendingAppeals %></strong>
+                                        <span>Result recheck requests waiting for review</span>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+
+                                <a href="<%= request.getContextPath() %>/notifications" class="priority-task-item info">
+                                    <div>
+                                        <small>Unread Notifications</small>
+                                        <strong><%= studentUnreadNotifications %></strong>
+                                        <span>Important academic updates for you</span>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+
+                                <a href="<%= request.getContextPath() %>/feedback" class="priority-task-item danger">
+                                    <div>
+                                        <small>Open Feedback</small>
+                                        <strong><%= studentOpenFeedback %></strong>
+                                        <span>Feedback or support messages still open</span>
+                                    </div>
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-7">
+                        <div class="app-card p-4 h-100 student-progress-card">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+                                <div>
+                                    <h4 class="fw-bold mb-1">Academic Progress Overview</h4>
+                                    <p class="text-secondary mb-0">
+                                        Track exam completion, result publishing, appeals, and notification progress.
+                                    </p>
+                                </div>
+
+                                <span class="badge badge-soft-primary">
+                                    <i class="bi bi-activity me-1"></i>
+                                    Student Progress
+                                </span>
+                            </div>
+
+                            <div class="dashboard-analytics-grid student-analytics-grid">
+                                <div class="dashboard-analytics-tile primary">
+                                    <div>
+                                        <small>Exam Completion</small>
+                                        <strong><%= studentExamCompletionRate %>%</strong>
+                                        <span><%= studentSubmittedAttempts %> submitted attempts</span>
+                                    </div>
+                                    <i class="bi bi-check2-circle"></i>
+                                </div>
+
+                                <div class="dashboard-analytics-tile success">
+                                    <div>
+                                        <small>Result Publish Rate</small>
+                                        <strong><%= studentResultPublishRate %>%</strong>
+                                        <span><%= studentPublishedResults %> published results</span>
+                                    </div>
+                                    <i class="bi bi-bar-chart-fill"></i>
+                                </div>
+
+                                <div class="dashboard-analytics-tile warning">
+                                    <div>
+                                        <small>Appeal Resolution</small>
+                                        <strong><%= studentAppealResolutionRate %>%</strong>
+                                        <span><%= studentResolvedAppeals + studentRejectedAppeals %> completed appeals</span>
+                                    </div>
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </div>
+
+                                <div class="dashboard-analytics-tile info">
+                                    <div>
+                                        <small>Notification Read Rate</small>
+                                        <strong><%= studentNotificationReadRate %>%</strong>
+                                        <span><%= studentUnreadNotifications %> unread notifications</span>
+                                    </div>
+                                    <i class="bi bi-bell-fill"></i>
+                                </div>
+                            </div>
+
+                            <div class="dashboard-progress-list mt-4">
+                                <div class="dashboard-progress-item">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Exam Completion Progress</span>
+                                        <strong><%= studentExamCompletionRate %>%</strong>
+                                    </div>
+                                    <div class="progress dashboard-progress">
+                                        <div class="progress-bar" style="width:<%= studentExamCompletionRate %>%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="dashboard-progress-item">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Result Publishing Progress</span>
+                                        <strong><%= studentResultPublishRate %>%</strong>
+                                    </div>
+                                    <div class="progress dashboard-progress">
+                                        <div class="progress-bar bg-success" style="width:<%= studentResultPublishRate %>%;"></div>
+                                    </div>
+                                </div>
+
+                                <div class="dashboard-progress-item">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>Appeal Resolution Progress</span>
+                                        <strong><%= studentAppealResolutionRate %>%</strong>
+                                    </div>
+                                    <div class="progress dashboard-progress">
+                                        <div class="progress-bar bg-warning" style="width:<%= studentAppealResolutionRate %>%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Student Quick Actions -->
+                <div class="row g-4 mb-4">
+                    <div class="col-xl-8">
+                        <div class="app-card p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                                <div>
+                                    <h4 class="fw-bold mb-1">Student Quick Actions</h4>
+                                    <p class="text-secondary mb-0">
+                                        Open your most important academic pages quickly.
+                                    </p>
+                                </div>
+
+                                <span class="badge badge-soft-primary">Academic Workspace</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-md-6 col-xl-4">
+                                    <a href="<%= request.getContextPath() %>/my-exams">
+                                        <div class="app-card quick-card student-quick-card">
+                                            <div class="quick-icon"><i class="bi bi-laptop-fill"></i></div>
+                                            <h5>My Exams</h5>
+                                            <p>View available exams and continue your exam workflow.</p>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="col-md-6 col-xl-4">
+                                    <a href="<%= request.getContextPath() %>/my-results">
+                                        <div class="app-card quick-card student-quick-card">
+                                            <div class="quick-icon"><i class="bi bi-bar-chart-fill"></i></div>
+                                            <h5>My Results</h5>
+                                            <p>Check published results and performance information.</p>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="col-md-6 col-xl-4">
+                                    <a href="<%= request.getContextPath() %>/result-appeals">
+                                        <div class="app-card quick-card student-quick-card">
+                                            <div class="quick-icon"><i class="bi bi-arrow-repeat"></i></div>
+                                            <h5>Result Appeals</h5>
+                                            <p>Submit or track result recheck requests.</p>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="col-md-6 col-xl-4">
+                                    <a href="<%= request.getContextPath() %>/notifications">
+                                        <div class="app-card quick-card student-quick-card">
+                                            <div class="quick-icon"><i class="bi bi-bell-fill"></i></div>
+                                            <h5>Notifications</h5>
+                                            <p>Read important academic updates and alerts.</p>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="col-md-6 col-xl-4">
+                                    <a href="<%= request.getContextPath() %>/feedback">
+                                        <div class="app-card quick-card student-quick-card">
+                                            <div class="quick-icon"><i class="bi bi-chat-dots-fill"></i></div>
+                                            <h5>Feedback</h5>
+                                            <p>Send academic concerns or support requests.</p>
+                                        </div>
+                                    </a>
+                                </div>
+
+                                <div class="col-md-6 col-xl-4">
+                                    <a href="<%= request.getContextPath() %>/notices">
+                                        <div class="app-card quick-card student-quick-card">
+                                            <div class="quick-icon"><i class="bi bi-megaphone-fill"></i></div>
+                                            <h5>Notices</h5>
+                                            <p>View academic announcements and exam notices.</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-xl-4">
+                        <div class="app-card p-4 h-100">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4 class="fw-bold mb-1">Student Summary</h4>
+                                    <p class="text-secondary mb-0">Your academic snapshot</p>
+                                </div>
+
+                                <span class="badge <%= studentPriorityBadge %>">
+                                    <%= studentPriorityScore %> Items
+                                </span>
+                            </div>
+
+                            <div class="student-summary-stack">
+                                <div class="student-summary-item">
+                                    <small>Available Exams</small>
+                                    <strong><%= studentAvailableExams %> Ready</strong>
+                                    <span>Go to My Exams to begin available attempts</span>
+                                </div>
+
+                                <div class="student-summary-item">
+                                    <small>Results</small>
+                                    <strong><%= studentPublishedResults %> Published</strong>
+                                    <span>Average published score: <%= studentAverageMarks %>%</span>
+                                </div>
+
+                                <div class="student-summary-item">
+                                    <small>Appeals</small>
+                                    <strong><%= studentTotalAppeals %> Total</strong>
+                                    <span><%= studentPendingAppeals %> pending · <%= studentUnderReviewAppeals %> under review</span>
+                                </div>
+
+                                <div class="student-summary-item">
+                                    <small>Latest Notice</small>
+                                    <strong>
+                                        <%= latestStudentNotice != null ? FileUtil.h(latestStudentNotice.getTitle()) : "No notice available" %>
+                                    </strong>
+                                    <span>
+                                        <%= latestStudentNotice != null ? FileUtil.h(latestStudentNotice.getNoticeDate()) : "Check notices later for academic announcements" %>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            <% } else if (isLecturer) { %>
 
                 <!-- Lecturer Dashboard Hero -->
                 <div class="hero-card lecturer-hero-card mb-4">
