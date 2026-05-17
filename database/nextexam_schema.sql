@@ -142,6 +142,14 @@ CREATE TABLE IF NOT EXISTS system_settings (
                                                setting_value TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS faculties (
+                                         faculty_id VARCHAR(30) PRIMARY KEY,
+                                         faculty_name VARCHAR(120) NOT NULL,
+                                         dean_name VARCHAR(120) NOT NULL,
+                                         contact_email VARCHAR(120) NOT NULL,
+                                         status VARCHAR(30) NOT NULL
+);
+
 
 INSERT IGNORE INTO users (user_id, username, password, email, role, status, profile_image)
 VALUES
