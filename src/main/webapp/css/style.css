@@ -6877,3 +6877,323 @@ body.sidebar-open {
     color: var(--danger);
     margin-bottom: 12px;
 }
+
+/* ================================
+   Pack 24 - Academic Record Transcript
+================================ */
+.academic-record-page {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.05), transparent 34%),
+        var(--bg);
+}
+
+.transcript-hero-card {
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.15), transparent 34%),
+        radial-gradient(circle at bottom left, rgba(6, 182, 212, 0.10), transparent 32%),
+        linear-gradient(135deg, #ffffff, #f8fafc);
+}
+
+.transcript-paper {
+    background: #ffffff;
+    border-radius: 30px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
+}
+
+.transcript-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.transcript-brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.transcript-logo {
+    width: 64px;
+    height: 64px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--primary-light), var(--accent));
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 16px 34px rgba(37, 99, 235, 0.24);
+    flex-shrink: 0;
+}
+
+.transcript-brand h2 {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 950;
+    letter-spacing: -0.045em;
+    color: var(--dark);
+}
+
+.transcript-brand p {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.transcript-generated {
+    text-align: right;
+    padding: 12px 14px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+}
+
+.transcript-generated small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.transcript-generated strong {
+    display: block;
+    color: var(--dark);
+    font-size: 14px;
+    font-weight: 950;
+}
+
+.transcript-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 24px 0;
+}
+
+.transcript-student-box,
+.transcript-standing-box {
+    height: 100%;
+    padding: 22px;
+    border-radius: 26px;
+    border: 1px solid var(--border);
+    background:
+        radial-gradient(circle at top right, rgba(37, 99, 235, 0.08), transparent 34%),
+        #ffffff;
+    box-shadow: var(--shadow-xs);
+}
+
+.transcript-student-box h3 {
+    font-size: 24px;
+    font-weight: 950;
+    color: var(--dark);
+    letter-spacing: -0.04em;
+    margin-bottom: 16px;
+}
+
+.transcript-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.transcript-info-grid div {
+    padding: 12px;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+}
+
+.transcript-info-grid small,
+.transcript-stat-card small {
+    display: block;
+    color: var(--muted);
+    font-size: 10px;
+    font-weight: 950;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 5px;
+}
+
+.transcript-info-grid strong {
+    color: var(--dark);
+    font-size: 13px;
+    font-weight: 950;
+}
+
+.transcript-standing-box {
+    background:
+        radial-gradient(circle at top right, rgba(22, 163, 74, 0.10), transparent 35%),
+        #ffffff;
+}
+
+.transcript-standing-box h3 {
+    color: var(--dark);
+    font-size: 38px;
+    font-weight: 950;
+    letter-spacing: -0.06em;
+    margin-bottom: 4px;
+}
+
+.transcript-standing-box p {
+    color: var(--muted);
+    font-weight: 800;
+    margin-bottom: 16px;
+}
+
+.transcript-standing-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.transcript-standing-meta span {
+    padding: 8px 11px;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 850;
+}
+
+.transcript-standing-meta strong {
+    color: var(--dark);
+}
+
+.transcript-stat-card {
+    min-height: 110px;
+    padding: 17px;
+    border-radius: 22px;
+    background: #ffffff;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-xs);
+}
+
+.transcript-stat-card strong {
+    display: block;
+    color: var(--dark);
+    font-size: 27px;
+    font-weight: 950;
+    letter-spacing: -0.05em;
+}
+
+.transcript-grade-strip {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.transcript-grade-strip div {
+    padding: 14px;
+    border-radius: 20px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    text-align: center;
+}
+
+.transcript-grade-strip span {
+    display: block;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 950;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+}
+
+.transcript-grade-strip strong {
+    display: block;
+    color: var(--primary-light);
+    font-size: 24px;
+    font-weight: 950;
+}
+
+.transcript-table {
+    min-width: 960px;
+}
+
+.transcript-table-wrap {
+    border-radius: 24px;
+}
+
+.transcript-footer-note {
+    padding: 15px 18px;
+    border-radius: 18px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+}
+
+.transcript-footer-note p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 750;
+}
+
+@media (max-width: 768px) {
+    .transcript-info-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .transcript-grade-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .transcript-generated {
+        text-align: left;
+    }
+
+    .transcript-brand h2 {
+        font-size: 21px;
+    }
+}
+
+@media print {
+    body {
+        background: #ffffff !important;
+    }
+
+    .no-print,
+    .sidebar,
+    .sidebar-backdrop,
+    .topbar,
+    .btn,
+    .alert {
+        display: none !important;
+    }
+
+    .main-content {
+        margin-left: 0 !important;
+        background: #ffffff !important;
+    }
+
+    .page-wrapper {
+        padding: 0 !important;
+    }
+
+    .transcript-paper {
+        box-shadow: none !important;
+        border: none !important;
+        border-radius: 0 !important;
+        padding: 0 !important;
+    }
+
+    .table-responsive {
+        overflow: visible !important;
+        border: 1px solid #d1d5db !important;
+    }
+
+    .transcript-table {
+        min-width: 0 !important;
+        font-size: 11px !important;
+    }
+
+    .badge {
+        border: 1px solid #d1d5db !important;
+        background: #ffffff !important;
+        color: #111827 !important;
+    }
+}
